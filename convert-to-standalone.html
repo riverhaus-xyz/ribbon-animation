@@ -447,8 +447,13 @@ animate();`;
         
         // Proceed to upload button click handler
         proceedToUploadButton.addEventListener('click', () => {
-            window.location.href = './upload-to-github.html';
-        });
+    // Encode the files as base64 URL parameters
+    const htmlBase64 = btoa(encodeURIComponent(generatedHtml));
+    const jsBase64 = btoa(encodeURIComponent(generatedJs));
+    
+    // Navigate to the download page with the files as parameters
+    window.location.href = `./download-files.html?html=${htmlBase64}&js=${jsBase64}&htmlName=${encodeURIComponent(generatedHtmlFileName)}&jsName=${encodeURIComponent(generatedJsFileName)}`;
+});
         
         // Load sample code
         inputCode.value = `import React, { useEffect, useRef } from 'react';
