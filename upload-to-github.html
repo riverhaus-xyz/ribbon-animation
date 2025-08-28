@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upload to GitHub</title>
+    <style>
+        body {
+            font-family: monospace;
+            margin: 20px;
+            background: white;
+            color: black;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        h1 {
+            color: #2c3e50;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+        }
+        .editor-section {
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .section-title {
+            margin-top: 0;
+            margin-bottom: 15px;
+            color: #2c3e50;
+        }
+        .instructions {
+            background: #f8f9fa;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+        .instructions h3 {
+            margin-top: 0;
+            color: #2c3e50;
+        }
+        .instructions ol {
+            padding-left: 20px;
+        }
+        .instructions li {
+            margin-bottom: 10px;
+        }
+        .button-container {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        button {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-family: monospace;
+            font-size: 16px;
+        }
+        button:hover {
+            background: #2980b9;
+        }
+        .notification {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #2ecc71;
+            color: white;
+            padding: 15px 20px;
+            border-radius: 4px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            transform: translateY(100px);
+            opacity: 0;
+            transition: all 0.3s ease;
+        }
+        .notification.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+        .notification.error {
+            background: #e74c3c;
+        }
+        .file-info {
+            background: #e8f4fc;
+            border-left: 4px solid #3498db;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+        .file-info h3 {
+            margin-top: 0;
+            color: #2c3e50;
+        }
+        .file-info p {
+            margin-bottom: 10px;
+        }
+        .file-info code {
+            background: #f5f5f5;
+            padding: 2px 4px;
+            border-radius: 3px;
+            font-family: monospace;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Upload to GitHub</h1>
+        
+        <div class="editor-section">
+            <h2 class="section-title">Instructions for Uploading to GitHub</h2>
+            
+            <div class="instructions">
+                <h3>Step 1: Go to Your GitHub Repository</h3>
+                <ol>
+                    <li>Navigate to your GitHub repository where you want to host the animation</li>
+                    <li>Make sure your repository is set up for GitHub Pages (if you want to host the animation)</li>
+                </ol>
+                
+                <h3>Step 2: Upload Your Files</h3>
+                <ol>
+                    <li>Click "Add file" > "Upload files"</li>
+                    <li>Select both the HTML and JavaScript files you downloaded</li>
+                    <li>Add a commit message like "Add animation files"</li>
+                    <li>Click "Commit changes"</li>
+                </ol>
+                
+                <h3>Step 3: Access Your Files</h3>
+                <p>Once uploaded, your files will be available at:</p>
+                <p><code>https://yourusername.github.io/your-repo/your-html-file.html</code></p>
+                <p>Note: If you're using GitHub Pages, it might take a few minutes for the files to be published.</p>
+            </div>
+            
+            <div class="file-info">
+                <h3>Important Notes</h3>
+                <p>• Make sure both files are in the same directory/folder in your repository</p>
+                <p>• The HTML file references the JavaScript file by name, so don't rename the JavaScript file after uploading</p>
+                <p>• If you want to use GitHub Pages, make sure it's enabled in your repository settings</p>
+            </div>
+            
+            <div class="button-container">
+                <button id="proceedToCustomizeButton">Proceed to Customization</button>
+            </div>
+        </div>
+    </div>
+    
+    <div class="notification" id="notification"></div>
+    
+    <script>
+        // Get DOM elements
+        const proceedToCustomizeButton = document.getElementById('proceedToCustomizeButton');
+        const notification = document.getElementById('notification');
+        
+        // Function to show notification
+        function showNotification(message, isError = false) {
+            notification.textContent = message;
+            notification.className = 'notification show' + (isError ? ' error' : '');
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 3000);
+        }
+        
+        // Proceed to customize button click handler
+        proceedToCustomizeButton.addEventListener('click', () => {
+            window.location.href = './minimal-editor-with-percent.html';
+        });
+    </script>
+</body>
+</html>
