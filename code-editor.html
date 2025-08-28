@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>React Code Cleaner</title>
+    <style>
+        body {
+            font-family: monospace;
+            margin: 20px;
+            background: white;
+            color: black;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+        h1 {
+            color: #2c3e50;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+        }
+        .editor-container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        .editor-section {
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 15px;
+        }
+        .section-title {
+            margin-top: 0;
+            margin-bottom: 10px;
+            color: #34495e;
+        }
+        textarea {
+            width: 100%;
+            height: 400px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 14px;
+            resize: vertical;
+        }
+        .button-container {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+        }
+        button {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-family: monospace;
+            font-size: 16px;
+        }
+        button:hover {
+            background: #2980b9;
+        }
+        .notification {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #2ecc71;
+            color: white;
+            padding: 15px 20px;
+            border-radius: 4px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            transform: translateY(100px);
+            opacity: 0;
+            transition: all 0.3s ease;
+        }
+        .notification.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+        .stats {
+            margin-top: 10px;
+            font-size: 14px;
+            color: #7f8c8d;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>React Code Cleaner</h1>
+        <p>Paste your React code below to remove discursive comments while preserving functionality.</p>
+        
+        <div class="editor-container">
+            <div class="editor-section">
+                <h2 class="section-title">Input Code</h2>
+                <textarea id="inputCode" placeholder="Paste your React code here..."></textarea>
+            </div>
+            
+            <div class="button-container">
+                <button id="cleanCode">Clean Code</button>
+                <button id="copyOutput">Copy Output</button>
+            </div>
+            
+            <div class="editor-section">
+                <h2 class="section-title">Cleaned Code</h2>
+                <textarea id="outputCode" readonly placeholder="Cleaned code will appear here..."></textarea>
+                <div class="stats" id="stats"></div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="notification" id="notification">Code copied to clipboard!</div>
+    
+    <script>
+        // Get DOM elements
+        const inputCode = document.getElementById('inputCode');
+        const outputCode = document.getElementById('outputCode');
+        const cleanCodeButton = document.getElementById('cleanCode');
+        const copyOutputButton = document.getElementById('copyOutput');
+        const notification = document.getElementById('notification');
+        const stats = document.getElementById('stats');
+        
+        // Function to clean the code
+        function cleanReactCode(code) {
+            let cleanedCode = code;
+            let commentsRemoved = 0;
+            let linesRemoved = 0;
+            
+            // Remove multi-line comments
+            const multiLineComments = cleanedCode.match(/\/\*[\s\S]*?\*\//g);
+            if (multiLineComments) {
+                commentsRemoved += multiLineComments.length;
+                cleanedCode = cleanedCode.replace(/\/\*[\s\S]*?\*\//g, '');
+            }
+            
+            // Remove single-line comments
+            const singleLineComments = cleanedCode.match(/\/\/.*$/gm);
+            if (singleLineComments) {
+                commentsRemoved += singleLineComments.length;
+                cleanedCode = cleanedCode.replace(/\/\/.*$/gm, '');
+            }
+            
+            // Remove empty lines (but preserve at least one empty line between blocks)
+            const originalLines = cleanedCode.split('\n');
+            const nonEmptyLines = originalLines.filter(line => line.trim() !== '');
+            
+            // Rebuild the code with proper spacing
+            cleanedCode = '';
+            let lastLineWasEmpty = false;
+            
+            for (const line of originalLines) {
+                if (line.trim() === '') {
+                    if (!lastLineWasEmpty) {
+                        cleanedCode += '\n';
+                        lastLineWasEmpty = true;
+                    }
+                } else {
+                    cleanedCode += line + '\n';
+                    lastLineWasEmpty = false;
+                }
+            }
+            
+            // Calculate lines removed
+            linesRemoved = originalLines.length - cleanedCode.split('\n').length;
+            
+            // Trim leading/trailing whitespace
+            cleanedCode = cleanedCode.trim();
+            
+            return {
+                cleanedCode,
+                commentsRemoved,
+                linesRemoved
+            };
+        }
+        
+        // Clean code button click handler
+        cleanCodeButton.addEventListener('click', () => {
+            const code = inputCode.value;
+            if (!code.trim()) {
+                alert('Please paste some code first.');
+                return;
+            }
+            
+            const result = cleanReactCode(code);
+            outputCode.value = result.cleanedCode;
+            
+            // Update stats
+            stats.textContent = `Removed ${result.commentsRemoved} comments and ${result.linesRemoved} empty lines.`;
+        });
+        
+        // Copy output button click handler
+        copyOutputButton.addEventListener('click', () => {
+            if (!outputCode.value) {
+                alert('No code to copy. Clean the code first.');
+                return;
+            }
+            
+            outputCode.select();
+            document.execCommand('copy');
+            
+            // Show notification
+            notification.classList.add('show');
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 3000);
+        });
+        
+        // Load sample code
+        inputCode.value = `import React, { useEffect, useRef } from 'react';
+// Themes: technology's dual nature, acceptance vs. control, natural satisfaction
+// Visualization: A ribbon that flows freely yet follows mathematical principles, showing how technology can align with natural movement
+interface RibbonSegment {
+  x: number;
+  y: number;
+  angle: number;
+  width: number;
+  height: number;
+  depth: number;
+}
+interface RibbonStrip {
+  // Technology in harmony with nature
+  segments: RibbonSegment[];
+  segmentCount: number;
+  width: number;
+  initialize: () => void;
+  update: (time: number) => void;
+  draw: (ctx: CanvasRenderingContext2D) => void;
+}
+const DramaticRibbonFold = () => {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    
+    canvas.width = 550;
+    canvas.height = 550;
+    class RibbonStrip {
+      // Technology in harmony with nature
+      segments: RibbonSegment[] = [];
+      segmentCount: number = 30;  // Balance of structure
+      width: number = 100;  // Space for movement
+      constructor() {
+        this.initialize();
+      }
+      // Each element finds its natural place
+      initialize() {
+        for (let i = 0; i < this.segmentCount; i++) {
+          this.segments.push({
+            x: 0,  // Beginning from stillness
+            y: 0,  // Ready to flow
+            angle: 0,  // No forced direction
+            width: this.width,  // Room to breathe
+            height: 20,  // Natural proportion
+            depth: 0  // Potential for growth
+          });
+        }
+      }
+      update(time: number) {
+        const centerX = canvas.width / 2;
+        const centerY = canvas.height / 2;
+        for (let i = 0; i < this.segments.length; i++) {
+          const t = i / (this.segments.length - 1);
+          const segment = this.segments[i];
+          
+          // Technology fostering freedom through natural movement
+          const smoothTime = time * 0.25;  // Finding nature's rhythm
+          const baseAngle = t * Math.PI * 6 + smoothTime;  // The spiral of life
+          const foldPhase = Math.sin(smoothTime * 0.01 + t * Math.PI * 4);  // Waves of change
+          const heightPhase = Math.cos(smoothTime * 0.00375 + t * Math.PI * 3);  // Breath of being
+          
+          // Position along a twisted path - structure revealing freedom
+          const radius = 120 + foldPhase * 60;
+          segment.x = centerX + Math.cos(baseAngle) * radius;
+          segment.y = centerY + Math.sin(baseAngle) * radius + heightPhase * 30;
+          
+          // Rotation for folding effect - showing flexible response
+          segment.angle = baseAngle + foldPhase * Math.PI * 0.5;
+          
+          // Width variation for perspective - allowing natural expansion
+          segment.width = this.width * (1 + foldPhase * 0.3);
+          
+          // Depth for sorting - layers of understanding
+          segment.depth = Math.sin(baseAngle + time * 0.15);
+        }
+      }
+      draw(ctx: CanvasRenderingContext2D) {
+        // Set wireframe style - revealing the underlying structure
+        ctx.lineWidth = 1.5;
+        ctx.setLineDash([2, 2]);
+        
+        // Sort segments by depth to show natural layering
+        const sortedSegments = [...this.segments].sort((a, b) => {
+          // Only change order if depth difference is significant - stable flow
+          const threshold = 0.1;
+          return Math.abs(a.depth - b.depth) > threshold ? a.depth - b.depth : 0;
+        });
+        // Draw segments as connected structure - technology made visible
+        for (let i = 0; i < sortedSegments.length - 1; i++) {
+          const current = sortedSegments[i];
+          const next = sortedSegments[i + 1];
+          ctx.save();
+          ctx.beginPath();
+          // Four corners of the ribbon segment - defining boundaries
+          const cos1 = Math.cos(current.angle);
+          const sin1 = Math.sin(current.angle);
+          const cos2 = Math.cos(next.angle);
+          const sin2 = Math.sin(next.angle);
+          const p1 = {
+            x: current.x - sin1 * current.width/2,
+            y: current.y + cos1 * current.width/2
+          };
+          const p2 = {
+            x: current.x + sin1 * current.width/2,
+            y: current.y - cos1 * current.width/2
+          };
+          const p3 = {
+            x: next.x + sin2 * next.width/2,
+            y: next.y - cos2 * next.width/2
+          };
+          const p4 = {
+            x: next.x - sin2 * next.width/2,
+            y: next.y + cos2 * next.width/2
+          };
+          // Draw wireframe outline - showing structure without hiding essence
+          ctx.moveTo(p1.x, p1.y);
+          ctx.lineTo(p2.x, p2.y);
+          ctx.lineTo(p3.x, p3.y);
+          ctx.lineTo(p4.x, p4.y);
+          ctx.closePath();
+          // Calculate opacity based on depth for natural visibility
+          const depthFactor = (current.depth + 1) * 0.5;
+          const opacity = 0.6 + depthFactor * 0.4;
+          
+          // Draw only stroke - transparency revealing inner truth
+          ctx.strokeStyle = \`rgba(40, 40, 40, \${opacity})\`;
+          ctx.stroke();
+          
+          // Draw diagonal lines for depth visualization - cross-connections
+          ctx.beginPath();
+          ctx.moveTo(p1.x, p1.y);
+          ctx.lineTo(p3.x, p3.y);
+          ctx.stroke();
+          
+          ctx.beginPath();
+          ctx.moveTo(p2.x, p2.y);
+          ctx.lineTo(p4.x, p4.y);
+          ctx.stroke();
+          
+          // Add center line for segment - the path of flow
+          ctx.beginPath();
+          ctx.moveTo(current.x, current.y);
+          ctx.lineTo(next.x, next.y);
+          ctx.strokeStyle = \`rgba(80, 80, 80, \${opacity * 0.7})\`;
+          ctx.stroke();
+          
+          ctx.restore();
+        }
+        
+        // Add vertex dots - connection points of understanding
+        for (let i = 0; i < sortedSegments.length; i++) {
+          const segment = sortedSegments[i];
+          const cos = Math.cos(segment.angle);
+          const sin = Math.sin(segment.angle);
+          
+          const p1 = {
+            x: segment.x - sin * segment.width/2,
+            y: segment.y + cos * segment.width/2
+          };
+          const p2 = {
+            x: segment.x + sin * segment.width/2,
+            y: segment.y - cos * segment.width/2
+          };
+          
+          const depthFactor = (segment.depth + 1) * 0.5;
+          const opacity = 0.7 + depthFactor * 0.3;
+          
+          // Draw vertex points - where structure meets freedom
+          ctx.beginPath();
+          ctx.arc(p1.x, p1.y, 2, 0, Math.PI * 2);
+          ctx.fillStyle = \`rgba(0, 0, 0, \${opacity})\`;
+          ctx.fill();
+          
+          ctx.beginPath();
+          ctx.arc(p2.x, p2.y, 2, 0, Math.PI * 2);
+          ctx.fillStyle = \`rgba(0, 0, 0, \${opacity})\`;
+          ctx.fill();
+          
+          // Draw center point - the still center of movement
+          ctx.beginPath();
+          ctx.arc(segment.x, segment.y, 1.5, 0, Math.PI * 2);
+          ctx.fillStyle = \`rgba(40, 40, 40, \${opacity})\`;
+          ctx.fill();
+        }
+        
+        // Reset line dash
+        ctx.setLineDash([]);
+      }
+    }
+    const ribbon = new RibbonStrip();
+    let time = 0;
+    let animationFrameId: number;
+    function animate() {
+      // Same background color as original
+      ctx.fillStyle = '#F0EEE6';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      
+      time += 0.00125;
+      ribbon.update(time);
+      ribbon.draw(ctx);
+      
+      animationFrameId = requestAnimationFrame(animate);
+    }
+    animate();
+    return () => {
+      cancelAnimationFrame(animationFrameId);
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ribbon.segments = [];
+      time = 0;
+    };
+  }, []);
+  return (
+    <div style={{
+      margin: 0,
+      background: '#F0EEE6',
+      overflow: 'hidden',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      height: '100vh',
+      width: '100vw',
+      position: 'relative'
+    }}>
+      <canvas 
+        ref={canvasRef} 
+        style={{ 
+          display: 'block',
+          width: '550px',
+          height: '550px'
+        }} 
+      />
+    </div>
+  );
+};
+export default DramaticRibbonFold;`;
+    </script>
+</body>
+</html>
