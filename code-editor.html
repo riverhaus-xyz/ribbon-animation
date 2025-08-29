@@ -63,6 +63,12 @@
         button:hover {
             background: #2980b9;
         }
+        .secondary-button {
+            background: #95a5a6;
+        }
+        .secondary-button:hover {
+            background: #7f8c8d;
+        }
         .notification {
             position: fixed;
             bottom: 20px;
@@ -85,9 +91,30 @@
             font-size: 14px;
             color: #7f8c8d;
         }
+        .workflow-link {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-family: monospace;
+            font-size: 16px;
+            text-decoration: none;
+            z-index: 1000;
+            transition: background 0.3s ease;
+        }
+        .workflow-link:hover {
+            background: #2980b9;
+        }
     </style>
 </head>
 <body>
+    <a href="workflow/workflow.html" class="workflow-link">View All Workflow Steps</a>
+    
     <div class="container">
         <h1>React Code Cleaner</h1>
         <p>Paste your React code below to remove discursive comments while preserving functionality.</p>
