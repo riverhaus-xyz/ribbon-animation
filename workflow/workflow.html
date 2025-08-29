@@ -82,13 +82,23 @@
         .step-button:hover {
             background: #2980b9;
         }
+        .step-button:disabled {
+            background: #95a5a6;
+            cursor: not-allowed;
+        }
         .step-status {
             font-size: 14px;
-            color: #7f8c8d;
-            font-style: italic;
+            font-weight: bold;
+            margin-top: 5px;
         }
         .completed {
             color: #2ecc71;
+        }
+        .current {
+            color: #3498db;
+        }
+        .upcoming {
+            color: #95a5a6;
         }
         .current-step {
             border-color: #3498db;
@@ -127,11 +137,18 @@
         .back-link:hover {
             background: #7f8c8d;
         }
+        .progress-indicator {
+            margin: 20px 0;
+            text-align: center;
+            font-size: 16px;
+            color: #3498db;
+            font-weight: bold;
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <a href="../index.html" class="back-link">← Back to Main Site</a>
+        <a href="../index.html?from=workflow" class="back-link">← Back to Main Site</a>
         
         <h1>React to Standalone Workflow</h1>
         
@@ -141,13 +158,17 @@
             <p>Follow the steps below to transform your React code into a customizable animation for your website.</p>
         </div>
         
+        <div class="progress-indicator" id="progressIndicator">
+            You are currently on Step 1 of 4
+        </div>
+        
         <div class="workflow-steps">
             <div class="step-card" data-step="1">
                 <div class="step-number">1</div>
                 <div class="step-content">
                     <div class="step-title">Clean React Code</div>
                     <div class="step-description">Remove discursive comments from your React code to prepare it for conversion.</div>
-                    <div class="step-status">Next Step</div>
+                    <div class="step-status upcoming">Next Step</div>
                 </div>
                 <button class="step-button" onclick="navigateToStep('../code-editor.html', 1)">Open Code Editor</button>
             </div>
@@ -157,7 +178,7 @@
                 <div class="step-content">
                     <div class="step-title">Convert to Standalone</div>
                     <div class="step-description">Generate HTML and JavaScript files from your cleaned React code and download them.</div>
-                    <div class="step-status">Next Step</div>
+                    <div class="step-status upcoming">Next Step</div>
                 </div>
                 <button class="step-button" onclick="navigateToStep('convert-to-standalone.html', 2)">Open Converter</button>
             </div>
@@ -167,7 +188,7 @@
                 <div class="step-content">
                     <div class="step-title">Upload to GitHub</div>
                     <div class="step-description">Upload your files to GitHub to host them online.</div>
-                    <div class="step-status">Next Step</div>
+                    <div class="step-status upcoming">Next Step</div>
                 </div>
                 <button class="step-button" onclick="navigateToStep('upload-to-github.html', 3)">View Instructions</button>
             </div>
@@ -177,7 +198,7 @@
                 <div class="step-content">
                     <div class="step-title">Generate Customization</div>
                     <div class="step-description">Create iframe code with customization options for your website.</div>
-                    <div class="step-status">Final Step</div>
+                    <div class="step-status upcoming">Final Step</div>
                 </div>
                 <button class="step-button" onclick="navigateToStep('../minimal-editor-with-percent.html', 4)">Open Customizer</button>
             </div>
@@ -193,8 +214,12 @@
 
         // Function to update the workflow step status
         function updateWorkflowStatus() {
-            // Get the current step from localStorage
+            // Get the current step from localStorage, default to 1
             const currentStep = localStorage.getItem('currentWorkflowStep') || '1';
+            
+            // Update progress indicator
+            const progressIndicator = document.getElementById('progressIndicator');
+            progressIndicator.textContent = `You are currently on Step ${currentStep} of 4`;
             
             // Update all step cards
             const stepCards = document.querySelectorAll('.step-card');
@@ -202,6 +227,7 @@
             stepCards.forEach(card => {
                 const stepNumber = card.getAttribute('data-step');
                 const statusElement = card.querySelector('.step-status');
+                const buttonElement = card.querySelector('.step-button');
                 
                 // Remove current-step class from all cards
                 card.classList.remove('current-step');
@@ -209,16 +235,19 @@
                 if (parseInt(stepNumber) < parseInt(currentStep)) {
                     // Mark as completed
                     statusElement.textContent = '✓ Completed';
-                    statusElement.classList.add('completed');
+                    statusElement.className = 'step-status completed';
+                    buttonElement.disabled = false;
                 } else if (stepNumber === currentStep) {
                     // Mark as current step
                     statusElement.textContent = 'Current Step';
-                    statusElement.classList.remove('completed');
+                    statusElement.className = 'step-status current';
                     card.classList.add('current-step');
+                    buttonElement.disabled = false;
                 } else {
-                    // Mark as next step
+                    // Mark as upcoming step
                     statusElement.textContent = 'Next Step';
-                    statusElement.classList.remove('completed');
+                    statusElement.className = 'step-status upcoming';
+                    buttonElement.disabled = true;
                 }
             });
         }
