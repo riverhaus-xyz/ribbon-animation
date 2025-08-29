@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upload to GitHub</title>
+    <style>
+        body {
+            font-family: monospace;
+            margin: 20px;
+            background: white;
+            color: black;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+        h1 {
+            color: #2c3e50;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+        }
+        h2 {
+            color: #34495e;
+            margin-top: 30px;
+        }
+        .instruction-section {
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .instruction-title {
+            color: #3498db;
+            margin-top: 0;
+            margin-bottom: 15px;
+        }
+        .instruction-steps {
+            margin-left: 20px;
+        }
+        .instruction-steps li {
+            margin-bottom: 10px;
+            line-height: 1.5;
+        }
+        .code-block {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 4px;
+            padding: 15px;
+            font-family: monospace;
+            font-size: 14px;
+            white-space: pre-wrap;
+            margin: 15px 0;
+            overflow-x: auto;
+        }
+        .button-container {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 30px;
+        }
+        button {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-family: monospace;
+            font-size: 16px;
+        }
+        button:hover {
+            background: #2980b9;
+        }
+        .secondary-button {
+            background: #95a5a6;
+        }
+        .secondary-button:hover {
+            background: #7f8c8d;
+        }
+        .github-button {
+            background: #333;
+        }
+        .github-button:hover {
+            background: #24292e;
+        }
+        .progress-steps {
+            display: flex;
+            justify-content: space-between;
+            margin: 20px 0 30px;
+        }
+        .step {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 25%;
+        }
+        .step-circle {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background: #ecf0f1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 8px;
+        }
+        .step.active .step-circle {
+            background: #3498db;
+            color: white;
+        }
+        .step.completed .step-circle {
+            background: #2ecc71;
+            color: white;
+        }
+        .step-label {
+            text-align: center;
+            font-size: 12px;
+        }
+        .tip-box {
+            background: #e8f4fc;
+            border-left: 4px solid #3498db;
+            padding: 15px;
+            margin: 20px 0;
+        }
+        .tip-title {
+            font-weight: bold;
+            margin-bottom: 5px;
+            color: #3498db;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Upload to GitHub</h1>
+        <p>Follow these steps to upload your files to GitHub and deploy your animation.</p>
+        
+        <div class="progress-steps">
+            <div class="step completed">
+                <div class="step-circle">✓</div>
+                <div class="step-label">Clean Code</div>
+            </div>
+            <div class="step completed">
+                <div class="step-circle">✓</div>
+                <div class="step-label">Convert</div>
+            </div>
+            <div class="step completed">
+                <div class="step-circle">✓</div>
+                <div class="step-label">Download</div>
+            </div>
+            <div class="step active">
+                <div class="step-circle">4</div>
+                <div class="step-label">Upload</div>
+            </div>
+        </div>
+        
+        <div class="instruction-section">
+            <h3 class="instruction-title">Step 1: Create a GitHub Repository</h3>
+            <ol class="instruction-steps">
+                <li>Log in to your GitHub account at <a href="https://github.com" target="_blank">github.com</a></li>
+                <li>Click the "+" icon in the top-right corner and select "New repository"</li>
+                <li>Enter a name for your repository (e.g., "ribbon-animation")</li>
+                <li>Choose whether to make it public or private</li>
+                <li>Check "Initialize this repository with a README"</li>
+                <li>Click "Create repository"</li>
+            </ol>
+        </div>
+        
+        <div class="instruction-section">
+            <h3 class="instruction-title">Step 2: Upload Your Files</h3>
+            <ol class="instruction-steps">
+                <li>In your new repository, click "Add file" and select "Upload files"</li>
+                <li>Drag and drop or select the files you downloaded (index.html and ribbon-animation.js)</li>
+                <li>Add a commit message (e.g., "Add ribbon animation files")</li>
+                <li>Click "Commit changes"</li>
+            </ol>
+            
+            <div class="tip-box">
+                <div class="tip-title">Alternative: Use Git Command Line</div>
+                <p>If you prefer using the command line, you can clone your repository and push the files:</p>
+                <div class="code-block">git clone https://github.com/your-username/your-repo.git
+cd your-repo
+cp /path/to/your/files .
+git add .
+git commit -m "Add ribbon animation files"
+git push origin main</div>
+            </div>
+        </div>
+        
+        <div class="instruction-section">
+            <h3 class="instruction-title">Step 3: Enable GitHub Pages</h3>
+            <ol class="instruction-steps">
+                <li>In your repository, go to "Settings"</li>
+                <li>Scroll down to the "GitHub Pages" section</li>
+                <li>Under "Source", select "Deploy from a branch"</li>
+                <li>Choose the "main" branch and "/ (root)" directory</li>
+                <li>Click "Save"</li>
+                <li>After a few moments, your site will be published at: <code>https://your-username.github.io/your-repo</code></li>
+            </ol>
+        </div>
+        
+        <div class="instruction-section">
+            <h3 class="instruction-title">Step 4: Verify Your Deployment</h3>
+            <ol class="instruction-steps">
+                <li>Visit the URL provided in the GitHub Pages section</li>
+                <li>Verify that your animation is displaying correctly</li>
+                <li>If you need to make changes, simply edit the files in your repository and commit them</li>
+                <li>GitHub Pages will automatically update your site</li>
+            </ol>
+            
+            <div class="tip-box">
+                <div class="tip-title">Custom Domain</div>
+                <p>If you have a custom domain, you can configure it in the GitHub Pages settings under "Custom domain".</p>
+            </div>
+        </div>
+        
+        <div class="button-container">
+            <button class="github-button" id="githubBtn">Go to GitHub</button>
+            <button class="secondary-button" id="backBtn">Back to Download</button>
+            <button id="completeBtn">Complete Workflow</button>
+        </div>
+    </div>
+    
+    <script>
+        // Get DOM elements
+        const githubBtn = document.getElementById('githubBtn');
+        const backBtn = document.getElementById('backBtn');
+        const completeBtn = document.getElementById('completeBtn');
+        
+        // Navigation handlers
+        githubBtn.addEventListener('click', () => {
+            window.open('https://github.com', '_blank');
+        });
+        
+        backBtn.addEventListener('click', () => {
+            window.location.href = 'download-files.html';
+        });
+        
+        completeBtn.addEventListener('click', () => {
+            // Mark workflow as completed
+            localStorage.setItem('workflowCompleted', 'true');
+            
+            // Show completion message
+            alert('Congratulations! You have completed the workflow. Your animation should now be live on GitHub Pages.');
+            
+            // Go back to workflow
+            window.location.href = 'workflow.html';
+        });
+    </script>
+</body>
+</html>
