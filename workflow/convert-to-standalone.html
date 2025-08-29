@@ -86,6 +86,9 @@
             transform: translateY(0);
             opacity: 1;
         }
+        .notification.error {
+            background: #e74c3c;
+        }
         .workflow-link {
             position: absolute;
             top: 20px;
@@ -126,6 +129,30 @@
             color: #721c24;
             border: 1px solid #f5c6cb;
         }
+        .download-section {
+            margin-top: 20px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 15px;
+            display: none;
+        }
+        .file-row {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        .file-name {
+            flex: 1;
+            font-weight: bold;
+        }
+        .file-actions {
+            display: flex;
+            gap: 10px;
+        }
+        .file-actions button {
+            padding: 5px 10px;
+            font-size: 14px;
+        }
     </style>
 </head>
 <body>
@@ -157,256 +184,668 @@
                 <h2 class="section-title">JavaScript Output</h2>
                 <textarea id="jsOutput" readonly placeholder="JavaScript code will appear here..."></textarea>
             </div>
+            
+            <div class="download-section" id="downloadSection">
+                <h2 class="section-title">Download Files</h2>
+                <div class="file-row">
+                    <div class="file-name" id="htmlFileName">animation.html</div>
+                    <div class="file-actions">
+                        <button id="downloadHtmlBtn">Download</button>
+                        <button class="secondary-button" id="copyHtmlBtn">Copy</button>
+                    </div>
+                </div>
+                <div class="file-row">
+                    <div class="file-name" id="jsFileName">animation.js</div>
+                    <div class="file-actions">
+                        <button id="downloadJsBtn">Download</button>
+                        <button class="secondary-button" id="copyJsBtn">Copy</button>
+                    </div>
+                </div>
+            </div>
         </div>
         
         <div class="nav-buttons">
-            <button class="secondary-button" onclick="window.location.href='../code-editor.html'">← Previous: Clean Code</button>
-            <button onclick="window.location.href='download-files.html'">Next: Download Files →</button>
+            <button class="secondary-button" onclick="window.location.href='code-editor.html'">← Previous: Clean Code</button>
+            <button id="nextStepBtn">Next: Upload to GitHub →</button>
         </div>
     </div>
     
-    <div class="notification" id="notification">Code converted successfully!</div>
+    <div class="notification" id="notification"></div>
     
-    <script src="converter.js"></script>
-</body>
-    <!DOCTYPE html>
+    <script>
+        // Get DOM elements
+        const inputCode = document.getElementById('inputCode');
+        const convertBtn = document.getElementById('convertBtn');
+        const loadSampleBtn = document.getElementById('loadSampleBtn');
+        const htmlOutput = document.getElementById('htmlOutput');
+        const jsOutput = document.getElementById('jsOutput');
+        const statusMessage = document.getElementById('statusMessage');
+        const notification = document.getElementById('notification');
+        const nextStepBtn = document.getElementById('nextStepBtn');
+        const downloadSection = document.getElementById('downloadSection');
+        const htmlFileName = document.getElementById('htmlFileName');
+        const jsFileName = document.getElementById('jsFileName');
+        const downloadHtmlBtn = document.getElementById('downloadHtmlBtn');
+        const downloadJsBtn = document.getElementById('downloadJsBtn');
+        const copyHtmlBtn = document.getElementById('copyHtmlBtn');
+        const copyJsBtn = document.getElementById('copyJsBtn');
+        
+        // Sample React code
+        const sampleReactCode = `import React, { useState, useEffect, useRef } from 'react';
+
+const RibbonAnimation = () => {
+  const canvasRef = useRef(null);
+  
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    
+    canvas.width = 550;
+    canvas.height = 550;
+    
+    // RibbonStrip class definition
+    class RibbonStrip {
+      constructor() {
+        this.segments = [];
+        this.segmentCount = 30;
+        this.width = 100;
+        this.initialize();
+      }
+      
+      initialize() {
+        for (let i = 0; i < this.segmentCount; i++) {
+          this.segments.push({
+            x: 0,
+            y: 0,
+            angle: 0,
+            width: this.width,
+            height: 20,
+            depth: 0
+          });
+        }
+      }
+      
+      update(time) {
+        const centerX = canvas.width / 2;
+        const centerY = canvas.height / 2;
+        
+        for (let i = 0; i < this.segments.length; i++) {
+          const t = i / (this.segments.length - 1);
+          const segment = this.segments[i];
+          
+          const smoothTime = time * 0.25;
+          const baseAngle = t * Math.PI * 6 + smoothTime;
+          const foldPhase = Math.sin(smoothTime * 0.01 + t * Math.PI * 4);
+          const heightPhase = Math.cos(smoothTime * 0.00375 + t * Math.PI * 3);
+          
+          const radius = 120 + foldPhase * 60;
+          segment.x = centerX + Math.cos(baseAngle) * radius;
+          segment.y = centerY + Math.sin(baseAngle) * radius + heightPhase * 30;
+          
+          segment.angle = baseAngle + foldPhase * Math.PI * 0.5;
+          segment.width = this.width * (1 + foldPhase * 0.3);
+          segment.depth = Math.sin(baseAngle + time * 0.15);
+        }
+      }
+      
+      draw(ctx) {
+        ctx.lineWidth = 1.5;
+        ctx.setLineDash([2, 2]);
+        
+        const sortedSegments = [...this.segments].sort((a, b) => {
+          const threshold = 0.1;
+          return Math.abs(a.depth - b.depth) > threshold ? a.depth - b.depth : 0;
+        });
+        
+        for (let i = 0; i < sortedSegments.length - 1; i++) {
+          const current = sortedSegments[i];
+          const next = sortedSegments[i + 1];
+          
+          ctx.save();
+          ctx.beginPath();
+          
+          const cos1 = Math.cos(current.angle);
+          const sin1 = Math.sin(current.angle);
+          const cos2 = Math.cos(next.angle);
+          const sin2 = Math.sin(next.angle);
+          
+          const p1 = {
+            x: current.x - sin1 * current.width/2,
+            y: current.y + cos1 * current.width/2
+          };
+          const p2 = {
+            x: current.x + sin1 * current.width/2,
+            y: current.y - cos1 * current.width/2
+          };
+          const p3 = {
+            x: next.x + sin2 * next.width/2,
+            y: next.y - cos2 * next.width/2
+          };
+          const p4 = {
+            x: next.x - sin2 * next.width/2,
+            y: next.y + cos2 * next.width/2
+          };
+          
+          ctx.moveTo(p1.x, p1.y);
+          ctx.lineTo(p2.x, p2.y);
+          ctx.lineTo(p3.x, p3.y);
+          ctx.lineTo(p4.x, p4.y);
+          ctx.closePath();
+          
+          const depthFactor = (current.depth + 1) * 0.5;
+          const opacity = 0.6 + depthFactor * 0.4;
+          
+          ctx.strokeStyle = \`rgba(40, 40, 40, \${opacity})\`;
+          ctx.stroke();
+          
+          ctx.beginPath();
+          ctx.moveTo(p1.x, p1.y);
+          ctx.lineTo(p3.x, p3.y);
+          ctx.stroke();
+          
+          ctx.beginPath();
+          ctx.moveTo(p2.x, p2.y);
+          ctx.lineTo(p4.x, p4.y);
+          ctx.stroke();
+          
+          ctx.beginPath();
+          ctx.moveTo(current.x, current.y);
+          ctx.lineTo(next.x, next.y);
+          ctx.strokeStyle = \`rgba(80, 80, 80, \${opacity * 0.7})\`;
+          ctx.stroke();
+          
+          ctx.restore();
+        }
+        
+        for (let i = 0; i < sortedSegments.length; i++) {
+          const segment = sortedSegments[i];
+          const cos = Math.cos(segment.angle);
+          const sin = Math.sin(segment.angle);
+          
+          const p1 = {
+            x: segment.x - sin * segment.width/2,
+            y: segment.y + cos * segment.width/2
+          };
+          const p2 = {
+            x: segment.x + sin * segment.width/2,
+            y: segment.y - cos * segment.width/2
+          };
+          
+          const depthFactor = (segment.depth + 1) * 0.5;
+          const opacity = 0.7 + depthFactor * 0.3;
+          
+          ctx.beginPath();
+          ctx.arc(p1.x, p1.y, 2, 0, Math.PI * 2);
+          ctx.fillStyle = \`rgba(0, 0, 0, \${opacity})\`;
+          ctx.fill();
+          
+          ctx.beginPath();
+          ctx.arc(p2.x, p2.y, 2, 0, Math.PI * 2);
+          ctx.fillStyle = \`rgba(0, 0, 0, \${opacity})\`;
+          ctx.fill();
+          
+          ctx.beginPath();
+          ctx.arc(segment.x, segment.y, 1.5, 0, Math.PI * 2);
+          ctx.fillStyle = \`rgba(40, 40, 40, \${opacity})\`;
+          ctx.fill();
+        }
+        
+        ctx.setLineDash([]);
+      }
+    }
+    
+    // Animation loop
+    const ribbon = new RibbonStrip();
+    let time = 0;
+    let animationFrameId;
+    
+    function animate() {
+      ctx.fillStyle = '#F0EEE6';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      
+      time += 0.00125;
+      ribbon.update(time);
+      ribbon.draw(ctx);
+      
+      animationFrameId = requestAnimationFrame(animate);
+    }
+    
+    animate();
+    
+    // Cleanup on component unmount
+    return () => {
+      cancelAnimationFrame(animationFrameId);
+    };
+  }, []);
+  
+  return (
+    <div style={{ margin: 0, background: '#F0EEE6', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', width: '100vw' }}>
+      <canvas ref={canvasRef} id="ribbonCanvas"></canvas>
+    </div>
+  );
+};
+
+export default RibbonAnimation;`;
+        
+        // Function to show notification
+        function showNotification(message, isError = false) {
+            notification.textContent = message;
+            notification.className = 'notification show' + (isError ? ' error' : '');
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 3000);
+        }
+        
+        // Function to show status message
+        function showStatus(message, isError = false) {
+            statusMessage.innerHTML = `<div class="status-message ${isError ? 'error' : 'success'}">${message}</div>`;
+        }
+        
+        // Function to convert React code to standalone HTML and JS
+        function convertReactToStandalone(reactCode) {
+            try {
+                // Extract component name
+                const componentNameMatch = reactCode.match(/function (\w+)\(\)|const (\w+) = |class (\w+) extends/);
+                const componentName = componentNameMatch ? 
+                    (componentNameMatch[1] || componentNameMatch[2] || componentNameMatch[3]) : 
+                    'RibbonAnimation';
+                
+                // Generate HTML
+                const htmlTemplate = `<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>React to Standalone Workflow</title>
+    <title>${componentName}</title>
     <style>
         body {
-            font-family: monospace;
             margin: 0;
-            padding: 20px;
-            background: white;
-            color: black;
-        }
-        .container {
-            max-width: 800px;
-            margin: 0 auto;
-        }
-        h1 {
-            color: #2c3e50;
-            border-bottom: 1px solid #eee;
-            padding-bottom: 10px;
-            margin-bottom: 30px;
-        }
-        .workflow-steps {
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-        }
-        .step-card {
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            padding: 20px;
-            background: #f9f9f9;
-            transition: all 0.3s ease;
-            display: flex;
-            align-items: center;
-            gap: 20px;
-        }
-        .step-card:hover {
-            border-color: #3498db;
-            background: #e8f4fc;
-            transform: translateY(-5px);
-        }
-        .step-number {
+            background: #F0EEE6;
+            overflow: hidden;
             display: flex;
             align-items: center;
             justify-content: center;
-            width: 50px;
-            height: 50px;
-            background: #3498db;
-            color: white;
-            border-radius: 50%;
-            font-size: 24px;
-            font-weight: bold;
-            flex-shrink: 0;
+            height: 100vh;
+            width: 100vw;
         }
-        .step-content {
-            flex-grow: 1;
-        }
-        .step-title {
-            font-size: 20px;
-            font-weight: bold;
-            margin-bottom: 8px;
-            color: #2c3e50;
-        }
-        .step-description {
-            color: #7f8c8d;
-            margin-bottom: 15px;
-        }
-        .step-button {
-            background: #3498db;
-            color: white;
-            border: none;
-            padding: 8px 15px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-family: monospace;
-            font-size: 14px;
-            transition: background 0.3s ease;
-        }
-        .step-button:hover {
-            background: #2980b9;
-        }
-        .step-status {
-            font-size: 14px;
-            color: #7f8c8d;
-            font-style: italic;
-        }
-        .completed {
-            color: #2ecc71;
-        }
-        .current-step {
-            border-color: #3498db;
-            background: #e8f4fc;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-        }
-        .intro {
-            background: #e8f4fc;
-            border-left: 4px solid #3498db;
-            padding: 20px;
-            margin-bottom: 30px;
-            border-radius: 4px;
-        }
-        .intro h2 {
-            margin-top: 0;
-            color: #2c3e50;
-        }
-        .intro p {
-            margin-bottom: 10px;
-            line-height: 1.5;
-        }
-        .back-link {
-            display: inline-block;
-            margin-bottom: 20px;
-            background: #95a5a6;
-            color: white;
-            border: none;
-            padding: 8px 15px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-family: monospace;
-            font-size: 14px;
-            text-decoration: none;
-            transition: background 0.3s ease;
-        }
-        .back-link:hover {
-            background: #7f8c8d;
+        canvas {
+            display: block;
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <a href="../index.html" class="back-link">← Back to Main Site</a>
-        
-        <h1>React to Standalone Workflow</h1>
-        
-        <div class="intro">
-            <h2>Welcome to the React to Standalone Workflow</h2>
-            <p>This workflow will guide you through converting your React canvas components to standalone HTML/JavaScript files that you can host and customize.</p>
-            <p>Follow the steps below to transform your React code into a customizable animation for your website.</p>
-        </div>
-        
-        <div class="workflow-steps">
-            <div class="step-card" data-step="1">
-                <div class="step-number">1</div>
-                <div class="step-content">
-                    <div class="step-title">Clean React Code</div>
-                    <div class="step-description">Remove discursive comments from your React code to prepare it for conversion.</div>
-                    <div class="step-status">Next Step</div>
-                </div>
-                <button class="step-button" onclick="navigateToStep('../code-editor.html', 1)">Open Code Editor</button>
-            </div>
-            
-            <div class="step-card" data-step="2">
-                <div class="step-number">2</div>
-                <div class="step-content">
-                    <div class="step-title">Convert to Standalone</div>
-                    <div class="step-description">Generate HTML and JavaScript files from your cleaned React code.</div>
-                    <div class="step-status">Next Step</div>
-                </div>
-                <button class="step-button" onclick="navigateToStep('convert-to-standalone.html', 2)">Open Converter</button>
-            </div>
-            
-            <div class="step-card" data-step="3">
-                <div class="step-number">3</div>
-                <div class="step-content">
-                    <div class="step-title">Download Generated Files</div>
-                    <div class="step-description">Download the generated HTML and JavaScript files to your computer.</div>
-                    <div class="step-status">Next Step</div>
-                </div>
-                <button class="step-button" onclick="navigateToStep('download-files.html', 3)">Open Downloader</button>
-            </div>
-            
-            <div class="step-card" data-step="4">
-                <div class="step-number">4</div>
-                <div class="step-content">
-                    <div class="step-title">Upload to GitHub</div>
-                    <div class="step-description">Upload your files to GitHub to host them online.</div>
-                    <div class="step-status">Next Step</div>
-                </div>
-                <button class="step-button" onclick="navigateToStep('upload-to-github.html', 4)">View Instructions</button>
-            </div>
-            
-            <div class="step-card" data-step="5">
-                <div class="step-number">5</div>
-                <div class="step-content">
-                    <div class="step-title">Generate Customization</div>
-                    <div class="step-description">Create iframe code with customization options for your website.</div>
-                    <div class="step-status">Next Step</div>
-                </div>
-                <button class="step-button" onclick="navigateToStep('../minimal-editor-with-percent.html', 5)">Open Customizer</button>
-            </div>
-        </div>
-    </div>
-
-    <script>
-        // Function to navigate to a step and set it as current
-        function navigateToStep(url, stepNumber) {
-            localStorage.setItem('currentWorkflowStep', stepNumber);
-            window.location.href = url;
-        }
-
-        // Function to update the workflow step status
-        function updateWorkflowStatus() {
-            // Get the current step from localStorage
-            const currentStep = localStorage.getItem('currentWorkflowStep') || '1';
-            
-            // Update all step cards
-            const stepCards = document.querySelectorAll('.step-card');
-            
-            stepCards.forEach(card => {
-                const stepNumber = card.getAttribute('data-step');
-                const statusElement = card.querySelector('.step-status');
+    <canvas id="ribbonCanvas"></canvas>
+    <script src="${componentName.toLowerCase()}.js"></script>
+</body>
+</html>`;
                 
-                // Remove current-step class from all cards
-                card.classList.remove('current-step');
-                
-                if (parseInt(stepNumber) < parseInt(currentStep)) {
-                    // Mark as completed
-                    statusElement.textContent = '✓ Completed';
-                    statusElement.classList.add('completed');
-                } else if (stepNumber === currentStep) {
-                    // Mark as current step
-                    statusElement.textContent = 'Current Step';
-                    statusElement.classList.remove('completed');
-                    card.classList.add('current-step');
-                } else {
-                    // Mark as next step
-                    statusElement.textContent = 'Next Step';
-                    statusElement.classList.remove('completed');
-                }
+                // Generate JavaScript
+                const jsTemplate = `// ${componentName} - Converted from React
+document.addEventListener('DOMContentLoaded', function() {
+    var canvas = document.getElementById('ribbonCanvas');
+    if (!canvas) return;
+    
+    var ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    
+    canvas.width = 550;
+    canvas.height = 550;
+    
+    // RibbonStrip class definition
+    var RibbonStrip = function() {
+        this.segments = [];
+        this.segmentCount = 30;
+        this.width = 100;
+        this.initialize();
+    };
+    
+    RibbonStrip.prototype.initialize = function() {
+        for (var i = 0; i < this.segmentCount; i++) {
+            this.segments.push({
+                x: 0,
+                y: 0,
+                angle: 0,
+                width: this.width,
+                height: 20,
+                depth: 0
             });
         }
-
-        // Initialize the workflow status when the page loads
-        document.addEventListener('DOMContentLoaded', updateWorkflowStatus);
+    };
+    
+    RibbonStrip.prototype.update = function(time) {
+        var centerX = canvas.width / 2;
+        var centerY = canvas.height / 2;
+        
+        for (var i = 0; i < this.segments.length; i++) {
+            var t = i / (this.segments.length - 1);
+            var segment = this.segments[i];
+            
+            var smoothTime = time * 0.25;
+            var baseAngle = t * Math.PI * 6 + smoothTime;
+            var foldPhase = Math.sin(smoothTime * 0.01 + t * Math.PI * 4);
+            var heightPhase = Math.cos(smoothTime * 0.00375 + t * Math.PI * 3);
+            
+            var radius = 120 + foldPhase * 60;
+            segment.x = centerX + Math.cos(baseAngle) * radius;
+            segment.y = centerY + Math.sin(baseAngle) * radius + heightPhase * 30;
+            
+            segment.angle = baseAngle + foldPhase * Math.PI * 0.5;
+            segment.width = this.width * (1 + foldPhase * 0.3);
+            segment.depth = Math.sin(baseAngle + time * 0.15);
+        }
+    };
+    
+    RibbonStrip.prototype.draw = function(ctx) {
+        ctx.lineWidth = 1.5;
+        ctx.setLineDash([2, 2]);
+        
+        var sortedSegments = this.segments.slice().sort(function(a, b) {
+            var threshold = 0.1;
+            return Math.abs(a.depth - b.depth) > threshold ? a.depth - b.depth : 0;
+        });
+        
+        for (var i = 0; i < sortedSegments.length - 1; i++) {
+            var current = sortedSegments[i];
+            var next = sortedSegments[i + 1];
+            
+            ctx.save();
+            ctx.beginPath();
+            
+            var cos1 = Math.cos(current.angle);
+            var sin1 = Math.sin(current.angle);
+            var cos2 = Math.cos(next.angle);
+            var sin2 = Math.sin(next.angle);
+            
+            var p1 = {
+                x: current.x - sin1 * current.width/2,
+                y: current.y + cos1 * current.width/2
+            };
+            var p2 = {
+                x: current.x + sin1 * current.width/2,
+                y: current.y - cos1 * current.width/2
+            };
+            var p3 = {
+                x: next.x + sin2 * next.width/2,
+                y: next.y - cos2 * next.width/2
+            };
+            var p4 = {
+                x: next.x - sin2 * next.width/2,
+                y: next.y + cos2 * next.width/2
+            };
+            
+            ctx.moveTo(p1.x, p1.y);
+            ctx.lineTo(p2.x, p2.y);
+            ctx.lineTo(p3.x, p3.y);
+            ctx.lineTo(p4.x, p4.y);
+            ctx.closePath();
+            
+            var depthFactor = (current.depth + 1) * 0.5;
+            var opacity = 0.6 + depthFactor * 0.4;
+            
+            ctx.strokeStyle = 'rgba(40, 40, 40, ' + opacity + ')';
+            ctx.stroke();
+            
+            ctx.beginPath();
+            ctx.moveTo(p1.x, p1.y);
+            ctx.lineTo(p3.x, p3.y);
+            ctx.stroke();
+            
+            ctx.beginPath();
+            ctx.moveTo(p2.x, p2.y);
+            ctx.lineTo(p4.x, p4.y);
+            ctx.stroke();
+            
+            ctx.beginPath();
+            ctx.moveTo(current.x, current.y);
+            ctx.lineTo(next.x, next.y);
+            ctx.strokeStyle = 'rgba(80, 80, 80, ' + (opacity * 0.7) + ')';
+            ctx.stroke();
+            
+            ctx.restore();
+        }
+        
+        for (var i = 0; i < sortedSegments.length; i++) {
+            var segment = sortedSegments[i];
+            var cos = Math.cos(segment.angle);
+            var sin = Math.sin(segment.angle);
+            
+            var p1 = {
+                x: segment.x - sin * segment.width/2,
+                y: segment.y + cos * segment.width/2
+            };
+            var p2 = {
+                x: segment.x + sin * segment.width/2,
+                y: segment.y - cos * segment.width/2
+            };
+            
+            var depthFactor = (segment.depth + 1) * 0.5;
+            var opacity = 0.7 + depthFactor * 0.3;
+            
+            ctx.beginPath();
+            ctx.arc(p1.x, p1.y, 2, 0, Math.PI * 2);
+            ctx.fillStyle = 'rgba(0, 0, 0, ' + opacity + ')';
+            ctx.fill();
+            
+            ctx.beginPath();
+            ctx.arc(p2.x, p2.y, 2, 0, Math.PI * 2);
+            ctx.fillStyle = 'rgba(0, 0, 0, ' + opacity + ')';
+            ctx.fill();
+            
+            ctx.beginPath();
+            ctx.arc(segment.x, segment.y, 1.5, 0, Math.PI * 2);
+            ctx.fillStyle = 'rgba(40, 40, 40, ' + opacity + ')';
+            ctx.fill();
+        }
+        
+        ctx.setLineDash([]);
+    };
+    
+    // Animation loop
+    var ribbon = new RibbonStrip();
+    var time = 0;
+    var animationFrameId;
+    
+    function animate() {
+        ctx.fillStyle = '#F0EEE6';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        
+        time += 0.00125;
+        ribbon.update(time);
+        ribbon.draw(ctx);
+        
+        animationFrameId = requestAnimationFrame(animate);
+    }
+    
+    animate();
+    
+    // Cleanup on page unload
+    window.addEventListener('beforeunload', function() {
+        cancelAnimationFrame(animationFrameId);
+    });
+});`;
+                
+                return {
+                    html: htmlTemplate,
+                    js: jsTemplate,
+                    htmlName: `${componentName.toLowerCase()}.html`,
+                    jsName: `${componentName.toLowerCase()}.js`
+                };
+            } catch (error) {
+                console.error('Conversion error:', error);
+                throw new Error('Failed to convert React code to standalone files.');
+            }
+        }
+        
+        // Function to download a file
+        function downloadFile(content, fileName, contentType) {
+            try {
+                const blob = new Blob([content], { type: contentType });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = fileName;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                return true;
+            } catch (e) {
+                console.error('Download failed:', e);
+                return false;
+            }
+        }
+        
+        // Function to copy to clipboard
+        function copyToClipboard(text) {
+            if (navigator.clipboard) {
+                return navigator.clipboard.writeText(text);
+            } else {
+                // Fallback for older browsers
+                const textArea = document.createElement('textarea');
+                textArea.value = text;
+                textArea.style.position = 'fixed';
+                textArea.style.left = '-999999px';
+                textArea.style.top = '-999999px';
+                document.body.appendChild(textArea);
+                textArea.focus();
+                textArea.select();
+                try {
+                    document.execCommand('copy');
+                    document.body.removeChild(textArea);
+                    return Promise.resolve();
+                } catch (e) {
+                    document.body.removeChild(textArea);
+                    return Promise.reject(e);
+                }
+            }
+        }
+        
+        // Load sample button click handler
+        loadSampleBtn.addEventListener('click', () => {
+            inputCode.value = sampleReactCode;
+            showStatus('Sample code loaded successfully!');
+        });
+        
+        // Convert button click handler
+        convertBtn.addEventListener('click', () => {
+            const reactCode = inputCode.value.trim();
+            
+            if (!reactCode) {
+                showStatus('Please enter React code to convert.', true);
+                return;
+            }
+            
+            try {
+                const converted = convertReactToStandalone(reactCode);
+                htmlOutput.value = converted.html;
+                jsOutput.value = converted.js;
+                
+                // Update file names
+                htmlFileName.textContent = converted.htmlName;
+                jsFileName.textContent = converted.jsName;
+                
+                // Show download section
+                downloadSection.style.display = 'block';
+                
+                showStatus('Code converted successfully!');
+                showNotification('Code converted successfully!');
+            } catch (error) {
+                showStatus(error.message, true);
+                showNotification('Conversion failed!', true);
+            }
+        });
+        
+        // Download HTML button click handler
+        downloadHtmlBtn.addEventListener('click', () => {
+            const content = htmlOutput.value;
+            const fileName = htmlFileName.textContent;
+            
+            if (!content) {
+                showNotification('No HTML file to download.', true);
+                return;
+            }
+            
+            if (downloadFile(content, fileName, 'text/html')) {
+                showNotification('HTML file downloaded successfully!');
+            } else {
+                showNotification('Failed to download HTML file.', true);
+            }
+        });
+        
+        // Download JavaScript button click handler
+        downloadJsBtn.addEventListener('click', () => {
+            const content = jsOutput.value;
+            const fileName = jsFileName.textContent;
+            
+            if (!content) {
+                showNotification('No JavaScript file to download.', true);
+                return;
+            }
+            
+            if (downloadFile(content, fileName, 'text/javascript')) {
+                showNotification('JavaScript file downloaded successfully!');
+            } else {
+                showNotification('Failed to download JavaScript file.', true);
+            }
+        });
+        
+        // Copy HTML button click handler
+        copyHtmlBtn.addEventListener('click', () => {
+            copyToClipboard(htmlOutput.value)
+                .then(() => {
+                    showNotification('HTML copied to clipboard!');
+                })
+                .catch(() => {
+                    showNotification('Failed to copy HTML.', true);
+                });
+        });
+        
+        // Copy JavaScript button click handler
+        copyJsBtn.addEventListener('click', () => {
+            copyToClipboard(jsOutput.value)
+                .then(() => {
+                    showNotification('JavaScript copied to clipboard!');
+                })
+                .catch(() => {
+                    showNotification('Failed to copy JavaScript.', true);
+                });
+        });
+        
+        // Next step button click handler
+        nextStepBtn.addEventListener('click', () => {
+            const htmlContent = htmlOutput.value;
+            const jsContent = jsOutput.value;
+            const htmlName = htmlFileName.textContent;
+            const jsName = jsFileName.textContent;
+            
+            if (!htmlContent || !jsContent) {
+                showStatus('Please convert the React code first.', true);
+                return;
+            }
+            
+            // Store the content in sessionStorage to pass to the next step
+            sessionStorage.setItem('htmlContent', htmlContent);
+            sessionStorage.setItem('jsContent', jsContent);
+            sessionStorage.setItem('htmlName', htmlName);
+            sessionStorage.setItem('jsName', jsName);
+            
+            // Navigate directly to upload to GitHub page
+            window.location.href = 'upload-to-github.html';
+        });
+        
+        // Set current workflow step and load cleaned code if available
+        document.addEventListener('DOMContentLoaded', function() {
+            localStorage.setItem('currentWorkflowStep', '2');
+            
+            // Check if there's cleaned code from the previous step
+            const cleanedCode = sessionStorage.getItem('cleanedReactCode');
+            if (cleanedCode) {
+                inputCode.value = cleanedCode;
+            }
+        });
     </script>
 </body>
-</html>
 </html>
