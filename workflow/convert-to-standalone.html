@@ -44,6 +44,7 @@
             font-family: monospace;
             font-size: 14px;
             resize: vertical;
+            box-sizing: border-box;
         }
         .button-container {
             display: flex;
@@ -69,6 +70,51 @@
         .secondary-button:hover {
             background: #7f8c8d;
         }
+        .notification {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #2ecc71;
+            color: white;
+            padding: 15px 20px;
+            border-radius: 4px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            transform: translateY(100px);
+            opacity: 0;
+            transition: all 0.3s ease;
+            z-index: 1000;
+        }
+        .notification.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+        .notification.error {
+            background: #e74c3c;
+        }
+        .workflow-link {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-family: monospace;
+            font-size: 16px;
+            text-decoration: none;
+            z-index: 1000;
+            transition: background 0.3s ease;
+        }
+        .workflow-link:hover {
+            background: #2980b9;
+        }
+        .nav-buttons {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+        }
         .status-message {
             margin-top: 10px;
             padding: 10px;
@@ -85,9 +131,35 @@
             color: #721c24;
             border: 1px solid #f5c6cb;
         }
+        .download-section {
+            margin-top: 20px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 15px;
+            display: none;
+        }
+        .file-row {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        .file-name {
+            flex: 1;
+            font-weight: bold;
+        }
+        .file-actions {
+            display: flex;
+            gap: 10px;
+        }
+        .file-actions button {
+            padding: 5px 10px;
+            font-size: 14px;
+        }
     </style>
 </head>
 <body>
+    <a href="workflow.html" class="workflow-link">View All Workflow Steps</a>
+    
     <div class="container">
         <h1>Convert to Standalone</h1>
         <p>Paste your cleaned React code below to generate standalone HTML and JavaScript files.</p>
@@ -114,13 +186,74 @@
                 <h2 class="section-title">JavaScript Output</h2>
                 <textarea id="jsOutput" readonly placeholder="JavaScript code will appear here..."></textarea>
             </div>
+            
+            <div class="download-section" id="downloadSection">
+                <h2 class="section-title">Download Files</h2>
+                <div class="file-row">
+                    <div class="file-name" id="htmlFileName">animation.html</div>
+                    <div class="file-actions">
+                        <button id="downloadHtmlBtn">Download</button>
+                        <button class="secondary-button" id="copyHtmlBtn">Copy</button>
+                    </div>
+                </div>
+                <div class="file-row">
+                    <div class="file-name" id="jsFileName">animation.js</div>
+                    <div class="file-actions">
+                        <button id="downloadJsBtn">Download</button>
+                        <button class="secondary-button" id="copyJsBtn">Copy</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="nav-buttons">
+            <button class="secondary-button" onclick="window.location.href='code-editor.html'">← Previous: Clean Code</button>
+            <button id="nextStepBtn">Next: Upload to GitHub →</button>
         </div>
     </div>
-
+    
+    <div class="notification" id="notification"></div>
+    
+    <!-- Load converter.js with error handling -->
     <script>
-        // Wait for DOM to be fully loaded
-        document.addEventListener('DOMContentLoaded', function() {
-            console.log("DOM fully loaded");
+        console.log("Attempting to load converter.js");
+        
+        // Function to load script with error handling
+        function loadScript(src, fallback) {
+            return new Promise((resolve, reject) => {
+                var script = document.createElement('script');
+                script.src = src;
+                script.onload = resolve;
+                script.onerror = () => {
+                    console.error("Failed to load " + src);
+                    if (fallback) {
+                        fallback().then(resolve).catch(reject);
+                    } else {
+                        reject(new Error("Failed to load script: " + src));
+                    }
+                };
+                document.head.appendChild(script);
+            });
+        }
+        
+        // Try to load converter.js from the same directory first
+        loadScript("./converter.js", function() {
+            // If that fails, try from the parent directory
+            return loadScript("../converter.js");
+        }).then(() => {
+            console.log("converter.js loaded successfully");
+            initConverter();
+        }).catch(error => {
+            console.error("All attempts to load converter.js failed:", error);
+            document.getElementById('statusMessage').innerHTML = 
+                '<div class="status-message error">Error: Could not load converter.js. Please check the file path.</div>';
+        });
+    </script>
+    
+    <script>
+        // Initialize the converter
+        function initConverter() {
+            console.log("Initializing converter");
             
             // Get DOM elements
             const inputCode = document.getElementById('inputCode');
@@ -129,30 +262,22 @@
             const htmlOutput = document.getElementById('htmlOutput');
             const jsOutput = document.getElementById('jsOutput');
             const statusMessage = document.getElementById('statusMessage');
+            const notification = document.getElementById('notification');
+            const nextStepBtn = document.getElementById('nextStepBtn');
+            const downloadSection = document.getElementById('downloadSection');
+            const htmlFileName = document.getElementById('htmlFileName');
+            const jsFileName = document.getElementById('jsFileName');
+            const downloadHtmlBtn = document.getElementById('downloadHtmlBtn');
+            const downloadJsBtn = document.getElementById('downloadJsBtn');
+            const copyHtmlBtn = document.getElementById('copyHtmlBtn');
+            const copyJsBtn = document.getElementById('copyJsBtn');
             
             // Check if all elements were found
-            if (!inputCode) {
-                console.error("Element with ID 'inputCode' not found");
-                return;
-            }
-            if (!convertBtn) {
-                console.error("Element with ID 'convertBtn' not found");
-                return;
-            }
-            if (!loadSampleBtn) {
-                console.error("Element with ID 'loadSampleBtn' not found");
-                return;
-            }
-            if (!htmlOutput) {
-                console.error("Element with ID 'htmlOutput' not found");
-                return;
-            }
-            if (!jsOutput) {
-                console.error("Element with ID 'jsOutput' not found");
-                return;
-            }
-            if (!statusMessage) {
-                console.error("Element with ID 'statusMessage' not found");
+            if (!inputCode || !convertBtn || !htmlOutput || !jsOutput) {
+                console.error('Error: Required DOM elements not found');
+                if (statusMessage) {
+                    statusMessage.innerHTML = '<div class="status-message error">Error: Required DOM elements not found</div>';
+                }
                 return;
             }
             
@@ -173,8 +298,179 @@ const RibbonAnimation = () => {
     canvas.width = 550;
     canvas.height = 550;
     
-    // Animation code here...
+    // RibbonStrip class definition
+    class RibbonStrip {
+      constructor() {
+        this.segments = [];
+        this.segmentCount = 30;
+        this.width = 100;
+        this.initialize();
+      }
+      
+      initialize() {
+        for (let i = 0; i < this.segmentCount; i++) {
+          this.segments.push({
+            x: 0,
+            y: 0,
+            angle: 0,
+            width: this.width,
+            height: 20,
+            depth: 0
+          });
+        }
+      }
+      
+      update(time) {
+        const centerX = canvas.width / 2;
+        const centerY = canvas.height / 2;
+        
+        for (let i = 0; i < this.segments.length; i++) {
+          const t = i / (this.segments.length - 1);
+          const segment = this.segments[i];
+          
+          const smoothTime = time * 0.25;
+          const baseAngle = t * Math.PI * 6 + smoothTime;
+          const foldPhase = Math.sin(smoothTime * 0.01 + t * Math.PI * 4);
+          const heightPhase = Math.cos(smoothTime * 0.00375 + t * Math.PI * 3);
+          
+          const radius = 120 + foldPhase * 60;
+          segment.x = centerX + Math.cos(baseAngle) * radius;
+          segment.y = centerY + Math.sin(baseAngle) * radius + heightPhase * 30;
+          
+          segment.angle = baseAngle + foldPhase * Math.PI * 0.5;
+          segment.width = this.width * (1 + foldPhase * 0.3);
+          segment.depth = Math.sin(baseAngle + time * 0.15);
+        }
+      }
+      
+      draw(ctx) {
+        ctx.lineWidth = 1.5;
+        ctx.setLineDash([2, 2]);
+        
+        const sortedSegments = [...this.segments].sort((a, b) => {
+          const threshold = 0.1;
+          return Math.abs(a.depth - b.depth) > threshold ? a.depth - b.depth : 0;
+        });
+        
+        for (let i = 0; i < sortedSegments.length - 1; i++) {
+          const current = sortedSegments[i];
+          const next = sortedSegments[i + 1];
+          
+          ctx.save();
+          ctx.beginPath();
+          
+          const cos1 = Math.cos(current.angle);
+          const sin1 = Math.sin(current.angle);
+          const cos2 = Math.cos(next.angle);
+          const sin2 = Math.sin(next.angle);
+          
+          const p1 = {
+            x: current.x - sin1 * current.width/2,
+            y: current.y + cos1 * current.width/2
+          };
+          const p2 = {
+            x: current.x + sin1 * current.width/2,
+            y: current.y - cos1 * current.width/2
+          };
+          const p3 = {
+            x: next.x + sin2 * next.width/2,
+            y: next.y - cos2 * next.width/2
+          };
+          const p4 = {
+            x: next.x - sin2 * next.width/2,
+            y: next.y + cos2 * next.width/2
+          };
+          
+          ctx.moveTo(p1.x, p1.y);
+          ctx.lineTo(p2.x, p2.y);
+          ctx.lineTo(p3.x, p3.y);
+          ctx.lineTo(p4.x, p4.y);
+          ctx.closePath();
+          
+          const depthFactor = (current.depth + 1) * 0.5;
+          const opacity = 0.6 + depthFactor * 0.4;
+          
+          ctx.strokeStyle = \`rgba(40, 40, 40, \${opacity})\`;
+          ctx.stroke();
+          
+          ctx.beginPath();
+          ctx.moveTo(p1.x, p1.y);
+          ctx.lineTo(p3.x, p3.y);
+          ctx.stroke();
+          
+          ctx.beginPath();
+          ctx.moveTo(p2.x, p2.y);
+          ctx.lineTo(p4.x, p4.y);
+          ctx.stroke();
+          
+          ctx.beginPath();
+          ctx.moveTo(current.x, current.y);
+          ctx.lineTo(next.x, next.y);
+          ctx.strokeStyle = \`rgba(80, 80, 80, \${opacity * 0.7})\`;
+          ctx.stroke();
+          
+          ctx.restore();
+        }
+        
+        for (let i = 0; i < sortedSegments.length; i++) {
+          const segment = sortedSegments[i];
+          const cos = Math.cos(segment.angle);
+          const sin = Math.sin(segment.angle);
+          
+          const p1 = {
+            x: segment.x - sin * segment.width/2,
+            y: segment.y + cos * segment.width/2
+          };
+          const p2 = {
+            x: segment.x + sin * segment.width/2,
+            y: segment.y - cos * segment.width/2
+          };
+          
+          const depthFactor = (segment.depth + 1) * 0.5;
+          const opacity = 0.7 + depthFactor * 0.3;
+          
+          ctx.beginPath();
+          ctx.arc(p1.x, p1.y, 2, 0, Math.PI * 2);
+          ctx.fillStyle = \`rgba(0, 0, 0, \${opacity})\`;
+          ctx.fill();
+          
+          ctx.beginPath();
+          ctx.arc(p2.x, p2.y, 2, 0, Math.PI * 2);
+          ctx.fillStyle = \`rgba(0, 0, 0, \${opacity})\`;
+          ctx.fill();
+          
+          ctx.beginPath();
+          ctx.arc(segment.x, segment.y, 1.5, 0, Math.PI * 2);
+          ctx.fillStyle = \`rgba(40, 40, 40, \${opacity})\`;
+          ctx.fill();
+        }
+        
+        ctx.setLineDash([]);
+      }
+    }
     
+    // Animation loop
+    const ribbon = new RibbonStrip();
+    let time = 0;
+    let animationFrameId;
+    
+    function animate() {
+      ctx.fillStyle = '#F0EEE6';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      
+      time += 0.00125;
+      ribbon.update(time);
+      ribbon.draw(ctx);
+      
+      animationFrameId = requestAnimationFrame(animate);
+    }
+    
+    animate();
+    
+    // Cleanup on component unmount
+    return () => {
+      cancelAnimationFrame(animationFrameId);
+    };
   }, []);
   
   return (
@@ -185,20 +481,77 @@ const RibbonAnimation = () => {
 };
 export default RibbonAnimation;`;
             
+            // Function to show notification
+            function showNotification(message, isError = false) {
+                if (notification) {
+                    notification.textContent = message;
+                    notification.className = 'notification show' + (isError ? ' error' : '');
+                    setTimeout(() => {
+                        notification.classList.remove('show');
+                    }, 3000);
+                }
+            }
+            
             // Function to show status message
             function showStatus(message, isError = false) {
-                statusMessage.innerHTML = `<div class="status-message ${isError ? 'error' : 'success'}">${message}</div>`;
+                if (statusMessage) {
+                    statusMessage.innerHTML = `<div class="status-message ${isError ? 'error' : 'success'}">${message}</div>`;
+                }
+            }
+            
+            // Function to download a file
+            function downloadFile(content, fileName, contentType) {
+                try {
+                    const blob = new Blob([content], { type: contentType });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = fileName;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                    return true;
+                } catch (e) {
+                    console.error('Download failed:', e);
+                    return false;
+                }
+            }
+            
+            // Function to copy to clipboard
+            function copyToClipboard(text) {
+                if (navigator.clipboard) {
+                    return navigator.clipboard.writeText(text);
+                } else {
+                    // Fallback for older browsers
+                    const textArea = document.createElement('textarea');
+                    textArea.value = text;
+                    textArea.style.position = 'fixed';
+                    textArea.style.left = '-999999px';
+                    textArea.style.top = '-999999px';
+                    document.body.appendChild(textArea);
+                    textArea.focus();
+                    textArea.select();
+                    try {
+                        document.execCommand('copy');
+                        document.body.removeChild(textArea);
+                        return Promise.resolve();
+                    } catch (e) {
+                        document.body.removeChild(textArea);
+                        return Promise.reject(e);
+                    }
+                }
             }
             
             // Load sample button click handler
-            loadSampleBtn.addEventListener('click', function() {
+            loadSampleBtn.addEventListener('click', () => {
                 console.log('Loading sample code');
                 inputCode.value = sampleReactCode;
                 showStatus('Sample code loaded successfully!');
             });
             
             // Convert button click handler
-            convertBtn.addEventListener('click', function() {
+            convertBtn.addEventListener('click', () => {
                 console.log('Convert button clicked');
                 
                 const reactCode = inputCode.value.trim();
@@ -209,75 +562,133 @@ export default RibbonAnimation;`;
                 }
                 
                 try {
-                    console.log('Converting React code');
+                    console.log('Converting React code, length:', reactCode.length);
                     
-                    // Simple conversion for now
-                    const componentName = 'RibbonAnimation';
-                    const htmlTemplate = `<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>${componentName}</title>
-    <style>
-        body {
-            margin: 0;
-            background: '#F0EEE6';
-            overflow: hidden;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            height: 100vh;
-            width: 100vw;
-        }
-        canvas {
-            display: block;
-        }
-    </style>
-</head>
-<body>
-    <canvas id="ribbonCanvas"></canvas>
-    <script src="${componentName.toLowerCase()}.js"></script>
-</body>
-</html>`;
+                    // Check if the conversion function is available
+                    if (typeof convertReactToStandalone !== 'function') {
+                        throw new Error('Conversion function not available');
+                    }
                     
-                    const jsTemplate = `// ${componentName} - Converted from React
-document.addEventListener('DOMContentLoaded', function() {
-    var canvas = document.getElementById('ribbonCanvas');
-    if (!canvas) return;
-    
-    var ctx = canvas.getContext('2d');
-    if (!ctx) return;
-    
-    canvas.width = 550;
-    canvas.height = 550;
-    
-    // Animation code here...
-    
-    function animate() {
-        ctx.fillStyle = '#F0EEE6';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-        
-        // Add your animation code here
-        
-        requestAnimationFrame(animate);
-    }
-    
-    animate();
-});`;
+                    const converted = convertReactToStandalone(reactCode);
+                    htmlOutput.value = converted.html;
+                    jsOutput.value = converted.js;
                     
-                    htmlOutput.value = htmlTemplate;
-                    jsOutput.value = jsTemplate;
+                    // Update file names
+                    if (htmlFileName) htmlFileName.textContent = converted.htmlName;
+                    if (jsFileName) jsFileName.textContent = converted.jsName;
+                    
+                    // Show download section
+                    if (downloadSection) downloadSection.style.display = 'block';
                     
                     showStatus('Code converted successfully!');
+                    showNotification('Code converted successfully!');
                 } catch (error) {
                     console.error('Conversion error:', error);
                     showStatus('Error: ' + error.message, true);
+                    showNotification('Conversion failed!', true);
                 }
             });
             
+            // Download HTML button click handler
+            if (downloadHtmlBtn) {
+                downloadHtmlBtn.addEventListener('click', () => {
+                    const content = htmlOutput.value;
+                    const fileName = htmlFileName.textContent;
+                    
+                    if (!content) {
+                        showNotification('No HTML file to download.', true);
+                        return;
+                    }
+                    
+                    if (downloadFile(content, fileName, 'text/html')) {
+                        showNotification('HTML file downloaded successfully!');
+                    } else {
+                        showNotification('Failed to download HTML file.', true);
+                    }
+                });
+            }
+            
+            // Download JavaScript button click handler
+            if (downloadJsBtn) {
+                downloadJsBtn.addEventListener('click', () => {
+                    const content = jsOutput.value;
+                    const fileName = jsFileName.textContent;
+                    
+                    if (!content) {
+                        showNotification('No JavaScript file to download.', true);
+                        return;
+                    }
+                    
+                    if (downloadFile(content, fileName, 'text/javascript')) {
+                        showNotification('JavaScript file downloaded successfully!');
+                    } else {
+                        showNotification('Failed to download JavaScript file.', true);
+                    }
+                });
+            }
+            
+            // Copy HTML button click handler
+            if (copyHtmlBtn) {
+                copyHtmlBtn.addEventListener('click', () => {
+                    copyToClipboard(htmlOutput.value)
+                        .then(() => {
+                            showNotification('HTML copied to clipboard!');
+                        })
+                        .catch(() => {
+                            showNotification('Failed to copy HTML.', true);
+                        });
+                });
+            }
+            
+            // Copy JavaScript button click handler
+            if (copyJsBtn) {
+                copyJsBtn.addEventListener('click', () => {
+                    copyToClipboard(jsOutput.value)
+                        .then(() => {
+                            showNotification('JavaScript copied to clipboard!');
+                        })
+                        .catch(() => {
+                            showNotification('Failed to copy JavaScript.', true);
+                        });
+                });
+            }
+            
+            // Next step button click handler
+            if (nextStepBtn) {
+                nextStepBtn.addEventListener('click', () => {
+                    const htmlContent = htmlOutput.value;
+                    const jsContent = jsOutput.value;
+                    const htmlName = htmlFileName.textContent;
+                    const jsName = jsFileName.textContent;
+                    
+                    if (!htmlContent || !jsContent) {
+                        showStatus('Please convert the React code first.', true);
+                        return;
+                    }
+                    
+                    // Store the content in sessionStorage to pass to the next step
+                    sessionStorage.setItem('htmlContent', htmlContent);
+                    sessionStorage.setItem('jsContent', jsContent);
+                    sessionStorage.setItem('htmlName', htmlName);
+                    sessionStorage.setItem('jsName', jsName);
+                    
+                    // Navigate directly to upload to GitHub page
+                    window.location.href = 'upload-to-github.html';
+                });
+            }
+            
+            // Set current workflow step and load cleaned code if available
+            localStorage.setItem('currentWorkflowStep', '2');
+            
+            // Check if there's cleaned code from the previous step
+            const cleanedCode = sessionStorage.getItem('cleanedReactCode');
+            if (cleanedCode) {
+                console.log('Loaded cleaned code from sessionStorage, length:', cleanedCode.length);
+                inputCode.value = cleanedCode;
+            }
+            
             console.log("Converter initialized successfully");
-        });
+        }
     </script>
 </body>
 </html>
