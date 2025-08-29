@@ -139,9 +139,41 @@
         .tab-content.active {
             display: block;
         }
+        .workflow-link {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-family: monospace;
+            font-size: 16px;
+            text-decoration: none;
+            z-index: 1000;
+            transition: background 0.3s ease;
+        }
+        .workflow-link:hover {
+            background: #2980b9;
+        }
+        .nav-buttons {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+        }
+        .secondary-button {
+            background: #95a5a6;
+        }
+        .secondary-button:hover {
+            background: #7f8c8d;
+        }
     </style>
 </head>
 <body>
+    <a href="../workflow.html" class="workflow-link">View All Workflow Steps</a>
+    
     <div class="container">
         <h1>Convert to Standalone</h1>
         
@@ -187,6 +219,11 @@
                     <button id="proceedToUploadButton">Proceed to Upload</button>
                 </div>
             </div>
+        </div>
+        
+        <div class="nav-buttons">
+            <button class="secondary-button" onclick="window.location.href='../code-editor.html'">← Previous: Clean Code</button>
+            <button onclick="window.location.href='./download-files.html'">Next: Download Files →</button>
         </div>
     </div>
     
@@ -322,7 +359,6 @@ const config = {
     backgroundColor: '${bgColor}',  // Default: background color
     transparentBackground: false    // Default: false
 };
-
 // Read URL parameters
 function updateConfigFromUrl() {
     const urlParams = new URLSearchParams(window.location.search);
@@ -348,24 +384,19 @@ function updateConfigFromUrl() {
         }
     }
 }
-
 // Initialize configuration from URL
 updateConfigFromUrl();
-
 // Canvas setup
 const canvas = document.getElementById('animationCanvas');
 const ctx = canvas.getContext('2d');
 canvas.width = ${canvasWidth};
 canvas.height = ${canvasHeight};
-
 // Animation class
 class ${className} {${classContent}}
-
 // Animation setup
 const animation = new ${className}();
 let time = 0;
 let animationFrameId;
-
 function animate() {
     // Handle background
     if (!config.transparentBackground) {
@@ -381,7 +412,6 @@ function animate() {
     
     animationFrameId = requestAnimationFrame(animate);
 }
-
 // Start animation
 animate();`;
             
@@ -627,65 +657,4 @@ const DramaticRibbonFold = () => {
           ctx.fillStyle = \`rgba(0, 0, 0, \${opacity})\`;
           ctx.fill();
           
-          ctx.beginPath();
-          ctx.arc(segment.x, segment.y, 1.5, 0, Math.PI * 2);
-          ctx.fillStyle = \`rgba(40, 40, 40, \${opacity})\`;
-          ctx.fill();
-        }
-        
-        ctx.setLineDash([]);
-      }
-    }
-    
-    const ribbon = new RibbonStrip();
-    let time = 0;
-    let animationFrameId: number;
-    
-    function animate() {
-      ctx.fillStyle = '#F0EEE6';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-      
-      time += 0.00125;
-      ribbon.update(time);
-      ribbon.draw(ctx);
-      
-      animationFrameId = requestAnimationFrame(animate);
-    }
-    
-    animate();
-    
-    return () => {
-      cancelAnimationFrame(animationFrameId);
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      ribbon.segments = [];
-      time = 0;
-    };
-  }, []);
-  
-  return (
-    <div style={{
-      margin: 0,
-      background: '#F0EEE6',
-      overflow: 'hidden',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      height: '100vh',
-      width: '100vw',
-      position: 'relative'
-    }}>
-      <canvas 
-        ref={canvasRef} 
-        style={{ 
-          display: 'block',
-          width: '550px',
-          height: '550px'
-        }} 
-      />
-    </div>
-  );
-};
-export default DramaticRibbonFold;`;
-    </script>
-</body>
-</html>
+          ctx.beginPath
