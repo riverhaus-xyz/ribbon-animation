@@ -12,7 +12,7 @@
             color: black;
         }
         .container {
-            max-width: 1000px;
+            max-width: 800px;
             margin: 0 auto;
         }
         h1 {
@@ -20,41 +20,33 @@
             border-bottom: 1px solid #eee;
             padding-bottom: 10px;
         }
-        .file-preview {
+        .editor-section {
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .section-title {
+            margin-top: 0;
+            margin-bottom: 15px;
+            color: #2c3e50;
+        }
+        .file-info {
+            background: #f8f9fa;
             border: 1px solid #ddd;
             border-radius: 4px;
             padding: 15px;
-            margin-bottom: 20px;
-        }
-        .file-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
             margin-bottom: 15px;
         }
         .file-name {
             font-weight: bold;
             color: #3498db;
         }
-        .file-size {
-            color: #7f8c8d;
-            font-size: 14px;
-        }
-        .file-content {
-            background: #f8f9fa;
-            border: 1px solid #e9ecef;
-            border-radius: 4px;
-            padding: 15px;
-            font-family: monospace;
-            font-size: 14px;
-            white-space: pre-wrap;
-            max-height: 300px;
-            overflow-y: auto;
-        }
         .button-container {
             display: flex;
             justify-content: center;
             gap: 15px;
+            margin-bottom: 20px;
         }
         button {
             background: #3498db;
@@ -75,12 +67,25 @@
         .secondary-button:hover {
             background: #7f8c8d;
         }
-        .download-all {
+        .notification {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
             background: #2ecc71;
-            margin-top: 20px;
+            color: white;
+            padding: 15px 20px;
+            border-radius: 4px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            transform: translateY(100px);
+            opacity: 0;
+            transition: all 0.3s ease;
         }
-        .download-all:hover {
-            background: #27ae60;
+        .notification.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+        .notification.error {
+            background: #e74c3c;
         }
         .workflow-link {
             position: absolute;
@@ -106,72 +111,370 @@
             justify-content: space-between;
             margin-top: 20px;
         }
-        .notification {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            background: #2ecc71;
-            color: white;
-            padding: 15px 20px;
+        textarea {
+            width: 100%;
+            height: 200px;
+            padding: 10px;
+            border: 1px solid #ccc;
             border-radius: 4px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
-            transform: translateY(100px);
-            opacity: 0;
-            transition: all 0.3s ease;
-        }
-        .notification.show {
-            transform: translateY(0);
-            opacity: 1;
+            font-family: monospace;
+            font-size: 14px;
+            resize: vertical;
+            margin-bottom: 15px;
         }
     </style>
 </head>
 <body>
-    <a href="workflow/workflow.html" class="workflow-link">View All Workflow Steps</a>
+    <a href="./workflow.html" class="workflow-link">View All Workflow Steps</a>
     
     <div class="container">
         <h1>Download Generated Files</h1>
-        <p>Download the HTML and JavaScript files for your standalone animation.</p>
         
-        <div class="file-preview">
-            <div class="file-header">
-                <div class="file-name">index.html</div>
-                <div class="file-size">~1.5 KB</div>
+        <div class="editor-section">
+            <h2 class="section-title">HTML File</h2>
+            <div class="file-info">
+                <p><span class="file-name">index.html</span> - The HTML file for your animation</p>
             </div>
-            <div class="file-content" id="htmlContent">
-<!-- HTML content will be loaded here -->
-            </div>
+            <textarea id="htmlCode" readonly placeholder="HTML code will appear here..."></textarea>
             <div class="button-container">
-                <button id="downloadHtmlBtn">Download HTML</button>
-                <button class="secondary-button" id="copyHtmlBtn">Copy HTML</button>
+                <button id="downloadHtmlButton">Download HTML</button>
+                <button class="secondary-button" id="copyHtmlButton">Copy HTML</button>
             </div>
         </div>
         
-        <div class="file-preview">
-            <div class="file-header">
-                <div class="file-name">ribbon-animation.js</div>
-                <div class="file-size">~8 KB</div>
+        <div class="editor-section">
+            <h2 class="section-title">JavaScript File</h2>
+            <div class="file-info">
+                <p><span class="file-name">ribbon-animation.js</span> - The JavaScript file for your animation</p>
             </div>
-            <div class="file-content" id="jsContent">
-<!-- JavaScript content will be loaded here -->
-            </div>
+            <textarea id="jsCode" readonly placeholder="JavaScript code will appear here..."></textarea>
             <div class="button-container">
-                <button id="downloadJsBtn">Download JS</button>
-                <button class="secondary-button" id="copyJsBtn">Copy JS</button>
+                <button id="downloadJsButton">Download JavaScript</button>
+                <button class="secondary-button" id="copyJsButton">Copy JavaScript</button>
             </div>
-        </div>
-        
-        <div class="button-container">
-            <button class="download-all" id="downloadAllBtn">Download All Files (ZIP)</button>
         </div>
         
         <div class="nav-buttons">
-            <button class="secondary-button" onclick="window.location.href='convert-to-standalone.html'">← Previous: Convert to Standalone</button>
-            <button onclick="window.location.href='upload-to-github.html'">Next: Upload to GitHub →</button>
+            <button class="secondary-button" onclick="window.location.href='./convert-to-standalone.html'">← Previous: Convert to Standalone</button>
+            <button onclick="window.location.href='./upload-to-github.html'">Next: Upload to GitHub →</button>
         </div>
     </div>
     
-    <div class="notification" id="notification">File downloaded successfully!</div>
+    <div class="notification" id="notification"></div>
     
-    <script src="downloader.js"></script>
+    <script>
+        // Wait for DOM to be ready
+        document.addEventListener('DOMContentLoaded', function() {
+            // Get DOM elements
+            const htmlCode = document.getElementById('htmlCode');
+            const jsCode = document.getElementById('jsCode');
+            const downloadHtmlButton = document.getElementById('downloadHtmlButton');
+            const downloadJsButton = document.getElementById('downloadJsButton');
+            const copyHtmlButton = document.getElementById('copyHtmlButton');
+            const copyJsButton = document.getElementById('copyJsButton');
+            const notification = document.getElementById('notification');
+            
+            // Sample file content
+            const sampleHtml = `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ribbon Animation</title>
+    <style>
+        body {
+            margin: 0;
+            background: #F0EEE6;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            width: 100vw;
+        }
+        canvas {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="ribbonCanvas"></canvas>
+    <script src="ribbon-animation.js"></script>
+</body>
+</html>`;
+
+            const sampleJs = `// Ribbon Animation - Converted from React
+document.addEventListener('DOMContentLoaded', function() {
+    var canvas = document.getElementById('ribbonCanvas');
+    if (!canvas) return;
+    
+    var ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    
+    canvas.width = 550;
+    canvas.height = 550;
+    
+    // RibbonStrip class definition
+    var RibbonStrip = function() {
+        this.segments = [];
+        this.segmentCount = 30;
+        this.width = 100;
+        this.initialize();
+    };
+    
+    RibbonStrip.prototype.initialize = function() {
+        for (var i = 0; i < this.segmentCount; i++) {
+            this.segments.push({
+                x: 0,
+                y: 0,
+                angle: 0,
+                width: this.width,
+                height: 20,
+                depth: 0
+            });
+        }
+    };
+    
+    RibbonStrip.prototype.update = function(time) {
+        var centerX = canvas.width / 2;
+        var centerY = canvas.height / 2;
+        
+        for (var i = 0; i < this.segments.length; i++) {
+            var t = i / (this.segments.length - 1);
+            var segment = this.segments[i];
+            
+            var smoothTime = time * 0.25;
+            var baseAngle = t * Math.PI * 6 + smoothTime;
+            var foldPhase = Math.sin(smoothTime * 0.01 + t * Math.PI * 4);
+            var heightPhase = Math.cos(smoothTime * 0.00375 + t * Math.PI * 3);
+            
+            var radius = 120 + foldPhase * 60;
+            segment.x = centerX + Math.cos(baseAngle) * radius;
+            segment.y = centerY + Math.sin(baseAngle) * radius + heightPhase * 30;
+            
+            segment.angle = baseAngle + foldPhase * Math.PI * 0.5;
+            segment.width = this.width * (1 + foldPhase * 0.3);
+            segment.depth = Math.sin(baseAngle + time * 0.15);
+        }
+    };
+    
+    RibbonStrip.prototype.draw = function(ctx) {
+        ctx.lineWidth = 1.5;
+        ctx.setLineDash([2, 2]);
+        
+        var sortedSegments = this.segments.slice().sort(function(a, b) {
+            var threshold = 0.1;
+            return Math.abs(a.depth - b.depth) > threshold ? a.depth - b.depth : 0;
+        });
+        
+        for (var i = 0; i < sortedSegments.length - 1; i++) {
+            var current = sortedSegments[i];
+            var next = sortedSegments[i + 1];
+            
+            ctx.save();
+            ctx.beginPath();
+            
+            var cos1 = Math.cos(current.angle);
+            var sin1 = Math.sin(current.angle);
+            var cos2 = Math.cos(next.angle);
+            var sin2 = Math.sin(next.angle);
+            
+            var p1 = {
+                x: current.x - sin1 * current.width/2,
+                y: current.y + cos1 * current.width/2
+            };
+            var p2 = {
+                x: current.x + sin1 * current.width/2,
+                y: current.y - cos1 * current.width/2
+            };
+            var p3 = {
+                x: next.x + sin2 * next.width/2,
+                y: next.y - cos2 * next.width/2
+            };
+            var p4 = {
+                x: next.x - sin2 * next.width/2,
+                y: next.y + cos2 * next.width/2
+            };
+            
+            ctx.moveTo(p1.x, p1.y);
+            ctx.lineTo(p2.x, p2.y);
+            ctx.lineTo(p3.x, p3.y);
+            ctx.lineTo(p4.x, p4.y);
+            ctx.closePath();
+            
+            var depthFactor = (current.depth + 1) * 0.5;
+            var opacity = 0.6 + depthFactor * 0.4;
+            
+            ctx.strokeStyle = 'rgba(40, 40, 40, ' + opacity + ')';
+            ctx.stroke();
+            
+            ctx.beginPath();
+            ctx.moveTo(p1.x, p1.y);
+            ctx.lineTo(p3.x, p3.y);
+            ctx.stroke();
+            
+            ctx.beginPath();
+            ctx.moveTo(p2.x, p2.y);
+            ctx.lineTo(p4.x, p4.y);
+            ctx.stroke();
+            
+            ctx.beginPath();
+            ctx.moveTo(current.x, current.y);
+            ctx.lineTo(next.x, next.y);
+            ctx.strokeStyle = 'rgba(80, 80, 80, ' + (opacity * 0.7) + ')';
+            ctx.stroke();
+            
+            ctx.restore();
+        }
+        
+        for (var i = 0; i < sortedSegments.length; i++) {
+            var segment = sortedSegments[i];
+            var cos = Math.cos(segment.angle);
+            var sin = Math.sin(segment.angle);
+            
+            var p1 = {
+                x: segment.x - sin * segment.width/2,
+                y: segment.y + cos * segment.width/2
+            };
+            var p2 = {
+                x: segment.x + sin * segment.width/2,
+                y: segment.y - cos * segment.width/2
+            };
+            
+            var depthFactor = (segment.depth + 1) * 0.5;
+            var opacity = 0.7 + depthFactor * 0.3;
+            
+            ctx.beginPath();
+            ctx.arc(p1.x, p1.y, 2, 0, Math.PI * 2);
+            ctx.fillStyle = 'rgba(0, 0, 0, ' + opacity + ')';
+            ctx.fill();
+            
+            ctx.beginPath();
+            ctx.arc(p2.x, p2.y, 2, 0, Math.PI * 2);
+            ctx.fillStyle = 'rgba(0, 0, 0, ' + opacity + ')';
+            ctx.fill();
+            
+            ctx.beginPath();
+            ctx.arc(segment.x, segment.y, 1.5, 0, Math.PI * 2);
+            ctx.fillStyle = 'rgba(40, 40, 40, ' + opacity + ')';
+            ctx.fill();
+        }
+        
+        ctx.setLineDash([]);
+    };
+    
+    // Animation loop
+    var ribbon = new RibbonStrip();
+    var time = 0;
+    var animationFrameId;
+    
+    function animate() {
+        ctx.fillStyle = '#F0EEE6';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        
+        time += 0.00125;
+        ribbon.update(time);
+        ribbon.draw(ctx);
+        
+        animationFrameId = requestAnimationFrame(animate);
+    }
+    
+    animate();
+    
+    // Cleanup on page unload
+    window.addEventListener('beforeunload', function() {
+        cancelAnimationFrame(animationFrameId);
+    });
+});`;
+            
+            // Load sample content
+            htmlCode.value = sampleHtml;
+            jsCode.value = sampleJs;
+            
+            // Show notification function
+            function showNotification(message, isError = false) {
+                notification.textContent = message;
+                notification.className = 'notification show' + (isError ? ' error' : '');
+                setTimeout(() => {
+                    notification.classList.remove('show');
+                }, 3000);
+            }
+            
+            // Download function
+            function downloadFile(content, filename) {
+                try {
+                    const element = document.createElement('a');
+                    const file = new Blob([content], { type: 'text/plain' });
+                    element.href = URL.createObjectURL(file);
+                    element.download = filename;
+                    document.body.appendChild(element);
+                    element.click();
+                    document.body.removeChild(element);
+                    return true;
+                } catch (e) {
+                    console.error('Download error:', e);
+                    return false;
+                }
+            }
+            
+            // Copy function
+            function copyToClipboard(text) {
+                try {
+                    navigator.clipboard.writeText(text).then(() => {
+                        return true;
+                    }).catch(() => {
+                        // Fallback for older browsers
+                        const textArea = document.createElement('textarea');
+                        textArea.value = text;
+                        textArea.style.position = 'fixed';
+                        textArea.style.opacity = '0';
+                        document.body.appendChild(textArea);
+                        textArea.select();
+                        document.execCommand('copy');
+                        document.body.removeChild(textArea);
+                        return true;
+                    });
+                } catch (e) {
+                    console.error('Copy error:', e);
+                    return false;
+                }
+            }
+            
+            // Event listeners
+            downloadHtmlButton.addEventListener('click', () => {
+                if (downloadFile(htmlCode.value, 'index.html')) {
+                    showNotification('HTML file downloaded!');
+                } else {
+                    showNotification('Download failed!', true);
+                }
+            });
+            
+            downloadJsButton.addEventListener('click', () => {
+                if (downloadFile(jsCode.value, 'ribbon-animation.js')) {
+                    showNotification('JavaScript file downloaded!');
+                } else {
+                    showNotification('Download failed!', true);
+                }
+            });
+            
+            copyHtmlButton.addEventListener('click', () => {
+                if (copyToClipboard(htmlCode.value)) {
+                    showNotification('HTML copied to clipboard!');
+                } else {
+                    showNotification('Copy failed!', true);
+                }
+            });
+            
+            copyJsButton.addEventListener('click', () => {
+                if (copyToClipboard(jsCode.value)) {
+                    showNotification('JavaScript copied to clipboard!');
+                } else {
+                    showNotification('Copy failed!', true);
+                }
+            });
+            
+            console.log('Download page initialized successfully');
+        });
+    </script>
 </body>
 </html>
