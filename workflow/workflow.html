@@ -90,6 +90,11 @@
         .completed {
             color: #2ecc71;
         }
+        .current-step {
+            border-color: #3498db;
+            background: #e8f4fc;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
         .intro {
             background: #e8f4fc;
             border-left: 4px solid #3498db;
@@ -137,56 +142,99 @@
         </div>
         
         <div class="workflow-steps">
-            <div class="step-card">
+            <div class="step-card" data-step="1">
                 <div class="step-number">1</div>
                 <div class="step-content">
                     <div class="step-title">Clean React Code</div>
                     <div class="step-description">Remove discursive comments from your React code to prepare it for conversion.</div>
-                    <div class="step-status">✓ Completed</div>
+                    <div class="step-status">Next Step</div>
                 </div>
-                <button class="step-button" onclick="window.location.href='../code-editor.html'">Open Code Editor</button>
+                <button class="step-button" onclick="navigateToStep('../code-editor.html', 1)">Open Code Editor</button>
             </div>
             
-            <div class="step-card">
+            <div class="step-card" data-step="2">
                 <div class="step-number">2</div>
                 <div class="step-content">
                     <div class="step-title">Convert to Standalone</div>
                     <div class="step-description">Generate HTML and JavaScript files from your cleaned React code.</div>
-                    <div class="step-status">Current Step</div>
+                    <div class="step-status">Next Step</div>
                 </div>
-                <button class="step-button" onclick="window.location.href='convert-to-standalone.html'">Open Converter</button>
+                <button class="step-button" onclick="navigateToStep('convert-to-standalone.html', 2)">Open Converter</button>
             </div>
             
-            <div class="step-card">
+            <div class="step-card" data-step="3">
                 <div class="step-number">3</div>
                 <div class="step-content">
                     <div class="step-title">Download Generated Files</div>
                     <div class="step-description">Download the generated HTML and JavaScript files to your computer.</div>
                     <div class="step-status">Next Step</div>
                 </div>
-                <button class="step-button" onclick="window.location.href='download-files.html'">Open Downloader</button>
+                <button class="step-button" onclick="navigateToStep('download-files.html', 3)">Open Downloader</button>
             </div>
             
-            <div class="step-card">
+            <div class="step-card" data-step="4">
                 <div class="step-number">4</div>
                 <div class="step-content">
                     <div class="step-title">Upload to GitHub</div>
                     <div class="step-description">Upload your files to GitHub to host them online.</div>
                     <div class="step-status">Next Step</div>
                 </div>
-                <button class="step-button" onclick="window.location.href='upload-to-github.html'">View Instructions</button>
+                <button class="step-button" onclick="navigateToStep('upload-to-github.html', 4)">View Instructions</button>
             </div>
             
-            <div class="step-card">
+            <div class="step-card" data-step="5">
                 <div class="step-number">5</div>
                 <div class="step-content">
                     <div class="step-title">Generate Customization</div>
                     <div class="step-description">Create iframe code with customization options for your website.</div>
-                    <div class="step-status">Final Step</div>
+                    <div class="step-status">Next Step</div>
                 </div>
-                <button class="step-button" onclick="window.location.href='../minimal-editor-with-percent.html'">Open Customizer</button>
+                <button class="step-button" onclick="navigateToStep('../minimal-editor-with-percent.html', 5)">Open Customizer</button>
             </div>
         </div>
     </div>
+
+    <script>
+        // Function to navigate to a step and set it as current
+        function navigateToStep(url, stepNumber) {
+            localStorage.setItem('currentWorkflowStep', stepNumber);
+            window.location.href = url;
+        }
+
+        // Function to update the workflow step status
+        function updateWorkflowStatus() {
+            // Get the current step from localStorage
+            const currentStep = localStorage.getItem('currentWorkflowStep') || '1';
+            
+            // Update all step cards
+            const stepCards = document.querySelectorAll('.step-card');
+            
+            stepCards.forEach(card => {
+                const stepNumber = card.getAttribute('data-step');
+                const statusElement = card.querySelector('.step-status');
+                
+                // Remove current-step class from all cards
+                card.classList.remove('current-step');
+                
+                if (parseInt(stepNumber) < parseInt(currentStep)) {
+                    // Mark as completed
+                    statusElement.textContent = '✓ Completed';
+                    statusElement.classList.add('completed');
+                } else if (stepNumber === currentStep) {
+                    // Mark as current step
+                    statusElement.textContent = 'Current Step';
+                    statusElement.classList.remove('completed');
+                    card.classList.add('current-step');
+                } else {
+                    // Mark as next step
+                    statusElement.textContent = 'Next Step';
+                    statusElement.classList.remove('completed');
+                }
+            });
+        }
+
+        // Initialize the workflow status when the page loads
+        document.addEventListener('DOMContentLoaded', updateWorkflowStatus);
+    </script>
 </body>
 </html>
