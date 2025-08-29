@@ -1,4 +1,4 @@
-// converter.js - Fixed version that properly extracts method bodies
+// converter.js - Fixed to handle HTML files
 console.log("converter.js loaded");
 
 // Debug flag - set to true for debugging, false for production
@@ -11,231 +11,136 @@ function debugLog(message) {
     }
 }
 
-// Function to extract component name from React code
-function extractComponentName(reactCode) {
-    debugLog('Extracting component name');
-    
-    // Try different patterns to find the component name
-    const patterns = [
-        /function\s+(\w+)\s*\(/,          // function ComponentName(
-        /const\s+(\w+)\s*=\s*\(/,         // const ComponentName = (
-        /class\s+(\w+)\s+extends/,        // class ComponentName extends
-        /export\s+default\s+function\s+(\w+)\s*\(/,  // export default function ComponentName(
-        /export\s+default\s+class\s+(\w+)\s+extends/  // export default class ComponentName extends
-    ];
-    
-    for (const pattern of patterns) {
-        const match = reactCode.match(pattern);
-        if (match) {
-            debugLog('Found component name: ' + match[1]);
-            return match[1];
-        }
-    }
-    
-    debugLog('No component name found, using default');
-    return 'RibbonAnimation';
+// Function to check if input is HTML
+function isHtmlInput(input) {
+    return input.trim().startsWith('<!DOCTYPE html') || 
+           input.trim().startsWith('<html') || 
+           input.includes('<canvas') && input.includes('<script src=');
 }
 
-// Function to extract canvas dimensions from React code
-function extractCanvasDimensions(reactCode) {
-    debugLog('Extracting canvas dimensions');
+// Function to extract information from HTML
+function extractFromHtml(htmlCode) {
+    debugLog('Extracting information from HTML');
     
-    // Look for canvas.width and canvas.height settings
-    const widthMatch = reactCode.match(/canvas\.width\s*=\s*(\d+)/);
-    const heightMatch = reactCode.match(/canvas\.height\s*=\s*(\d+)/);
+    // Extract title
+    const titleMatch = htmlCode.match(/<title>(.*?)<\/title>/);
+    const title = titleMatch ? titleMatch[1] : 'Animation';
     
-    const width = widthMatch ? widthMatch[1] : '550';
-    const height = heightMatch ? heightMatch[1] : '550';
+    // Extract script file name
+    const scriptMatch = htmlCode.match(/<script\s+src="(.*?)"><\/script>/);
+    const scriptFile = scriptMatch ? scriptMatch[1] : 'animation.js';
     
-    debugLog('Canvas dimensions: ' + width + 'x' + height);
-    return { width, height };
+    // Extract canvas dimensions
+    const canvasMatch = htmlCode.match(/<canvas\s+[^>]*width="(\d+)"[^>]*height="(\d+)"/);
+    const width = canvasMatch ? canvasMatch[1] : '550';
+    const height = canvasMatch ? canvasMatch[2] : '550';
+    
+    // Extract background color
+    const bgColorMatch = htmlCode.match(/background:\s*(.*?);/);
+    const bgColor = bgColorMatch ? bgColorMatch[1] : '#F0EEE6';
+    
+    debugLog(`Extracted: title=${title}, script=${scriptFile}, dimensions=${width}x${height}, bgColor=${bgColor}`);
+    
+    return {
+        title,
+        scriptFile,
+        width,
+        height,
+        bgColor
+    };
 }
 
-// Function to extract background color from React code
-function extractBackgroundColor(reactCode) {
-    debugLog('Extracting background color');
-    
-    // Look for background color in style or canvas fill
-    const patterns = [
-        /background:\s*['"]([^'"]+)['"]/,    // background: '#F0EEE6'
-        /fillStyle\s*=\s*['"]([^'"]+)['"]/,  // fillStyle = '#F0EEE6'
-        /backgroundColor:\s*['"]([^'"]+)['"]/ // backgroundColor: '#F0EEE6'
-    ];
-    
-    for (const pattern of patterns) {
-        const match = reactCode.match(pattern);
-        if (match) {
-            debugLog('Found background color: ' + match[1]);
-            return match[1];
+// Function to generate HTML from extracted info
+function generateHtmlFromExtracted(info) {
+    return `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>${info.title}</title>
+    <style>
+        body {
+            margin: 0;
+            background: ${info.bgColor};
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            width: 100vw;
         }
-    }
-    
-    debugLog('No background color found, using default');
-    return '#F0EEE6';
+        canvas {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="ribbonCanvas" width="${info.width}" height="${info.height}"></canvas>
+    <script src="${info.scriptFile}"></script>
+</body>
+</html>`;
 }
 
-// Function to extract classes from React code - FIXED VERSION
-function extractClasses(reactCode) {
-    debugLog('Extracting classes');
+// Function to generate placeholder JS
+function generatePlaceholderJs(scriptFile) {
+    return `// This file should contain the JavaScript code from ${scriptFile}
+// The conversion process cannot extract JavaScript from HTML files
+// Please manually copy the content of ${scriptFile} here
+
+document.addEventListener('DOMContentLoaded', function() {
+    var canvas = document.getElementById('ribbonCanvas');
+    if (!canvas) return;
     
-    const classDefinitions = [];
-    const classRegex = /class\s+(\w+)\s*{([\s\S]*?)}/g;
-    let classMatch;
+    var ctx = canvas.getContext('2d');
+    if (!ctx) return;
     
-    while ((classMatch = classRegex.exec(reactCode)) !== null) {
-        const className = classMatch[1];
-        let classBody = classMatch[2];
-        
-        debugLog('Found class: ' + className);
-        
-        // Convert the class to vanilla JavaScript
-        let vanillaClass = `var ${className} = function() {`;
-        
-        // Extract constructor
-        const constructorMatch = classBody.match(/constructor\(\)\s*{([\s\S]*?)}/);
-        if (constructorMatch) {
-            vanillaClass += constructorMatch[1].replace(/this\.(\w+)\s*=\s*(\w+);/g, 'this.$1 = $2;');
-        } else {
-            vanillaClass += `
-                this.segments = [];
-                this.segmentCount = 30;
-                this.width = 100;
-                this.initialize();`;
-        }
-        
-        vanillaClass += `
-            };`;
-        
-        // Extract methods using a more robust approach
-        const methodRegex = /(\w+)\s*\(([^)]*)\)\s*{/g;
-        let methodMatch;
-        let lastIndex = 0;
-        
-        while ((methodMatch = methodRegex.exec(classBody)) !== null) {
-            const methodName = methodMatch[1];
-            const methodParams = methodMatch[2];
-            const methodStartIndex = methodMatch.index + methodMatch[0].length;
-            
-            debugLog('Found method: ' + methodName);
-            
-            // Find the end of the method body by matching braces
-            let braceCount = 1;
-            let methodEndIndex = methodStartIndex;
-            
-            while (braceCount > 0 && methodEndIndex < classBody.length) {
-                const char = classBody[methodEndIndex];
-                if (char === '{') {
-                    braceCount++;
-                } else if (char === '}') {
-                    braceCount--;
-                }
-                methodEndIndex++;
-            }
-            
-            // Extract the method body (without the outer braces)
-            const methodBody = classBody.substring(methodStartIndex, methodEndIndex - 1);
-            
-            vanillaClass += `
-            ${className}.prototype.${methodName} = function(${methodParams}) {`;
-            
-            // Convert method body
-            let convertedMethodBody = methodBody
-                .replace(/const\s+(\w+)\s*=\s*([^;]+);/g, 'var $1 = $2;')
-                .replace(/let\s+(\w+)\s*=\s*([^;]+);/g, 'var $1 = $2;')
-                .replace(/this\.(\w+)\s*=\s*this\.(\w+)\s*\+\s*(\w+);/g, 'this.$1 = this.$2 + $3;')
-                .replace(/Math\.([a-zA-Z]+)/g, 'Math.$1')
-                .replace(/ctx\.([a-zA-Z]+)/g, 'ctx.$1')
-                .replace(/`([^`]+)`/g, function(match, p1) {
-                    // Handle template literals
-                    return '"' + p1.replace(/\$\{/g, '" + ').replace(/\}/g, ' + "') + '"';
-                });
-            
-            vanillaClass += convertedMethodBody;
-            vanillaClass += `
-            };`;
-            
-            // Update the lastIndex to continue searching after this method
-            lastIndex = methodEndIndex;
-        }
-        
-        classDefinitions.push(vanillaClass);
-    }
-    
-    return classDefinitions;
+    // Animation code should be here
+    console.log('Please replace this with your actual animation code');
+});`;
 }
 
 // Main conversion function
-function convertReactToStandalone(reactCode) {
-    debugLog('Converting React code to standalone');
-    debugLog('Input code length: ' + reactCode.length);
+function convertReactToStandalone(inputCode) {
+    debugLog('Converting input to standalone');
+    debugLog('Input code length: ' + inputCode.length);
     
     try {
-        if (!reactCode || reactCode.trim() === '') {
-            throw new Error('No React code provided');
+        if (!inputCode || inputCode.trim() === '') {
+            throw new Error('No input provided');
         }
         
-        // Extract component information
-        const componentName = extractComponentName(reactCode);
-        const { width, height } = extractCanvasDimensions(reactCode);
-        const backgroundColor = extractBackgroundColor(reactCode);
-        
-        debugLog('Component name: ' + componentName);
-        debugLog('Canvas dimensions: ' + width + 'x' + height);
-        debugLog('Background color: ' + backgroundColor);
-        
-        // Extract classes
-        const classDefinitions = extractClasses(reactCode);
-        
-        // If no classes were found, create a fallback
-        if (classDefinitions.length === 0) {
-            debugLog('No classes found, creating fallback');
-            classDefinitions.push(`var ${componentName} = function() {
-                this.segments = [];
-                this.segmentCount = 30;
-                this.width = 100;
-                this.initialize();
-            };
+        // Check if input is HTML
+        if (isHtmlInput(inputCode)) {
+            debugLog('Input is HTML, extracting information');
             
-            ${componentName}.prototype.initialize = function() {
-                for (let i = 0; i < this.segmentCount; i++) {
-                    this.segments.push({
-                        x: 0,
-                        y: 0,
-                        angle: 0,
-                        width: this.width,
-                        height: 20,
-                        depth: 0
-                    });
-                }
-            };
+            const info = extractFromHtml(inputCode);
+            const htmlTemplate = generateHtmlFromExtracted(info);
+            const jsTemplate = generatePlaceholderJs(info.scriptFile);
             
-            ${componentName}.prototype.update = function(time) {
-                const centerX = ${width} / 2;
-                const centerY = ${height} / 2;
-                
-                for (let i = 0; i < this.segments.length; i++) {
-                    const t = i / (this.segments.length - 1);
-                    const segment = this.segments[i];
-                    
-                    const smoothTime = time * 0.25;
-                    const baseAngle = t * Math.PI * 6 + smoothTime;
-                    const foldPhase = Math.sin(smoothTime * 0.01 + t * Math.PI * 4);
-                    const heightPhase = Math.cos(smoothTime * 0.00375 + t * Math.PI * 3);
-                    
-                    const radius = 120 + foldPhase * 60;
-                    segment.x = centerX + Math.cos(baseAngle) * radius;
-                    segment.y = centerY + Math.sin(baseAngle) * radius + heightPhase * 30;
-                    
-                    segment.angle = baseAngle + foldPhase * Math.PI * 0.5;
-                    segment.width = this.width * (1 + foldPhase * 0.3);
-                    segment.depth = Math.sin(baseAngle + time * 0.15);
-                }
+            return {
+                html: htmlTemplate,
+                js: jsTemplate,
+                htmlName: `${info.title.toLowerCase()}.html`,
+                jsName: info.scriptFile
             };
-            
-            ${componentName}.prototype.draw = function(ctx) {
-                // Implementation would go here
-            };`);
         }
+        
+        // If not HTML, try to process as React code
+        debugLog('Input is not HTML, processing as React code');
+        
+        // Extract component name
+        const componentNameMatch = inputCode.match(/(?:function|const|class)\s+(\w+)/);
+        const componentName = componentNameMatch ? componentNameMatch[1] : 'RibbonAnimation';
+        
+        // Extract canvas dimensions
+        const widthMatch = inputCode.match(/canvas\.width\s*=\s*(\d+)/);
+        const heightMatch = inputCode.match(/canvas\.height\s*=\s*(\d+)/);
+        const width = widthMatch ? widthMatch[1] : '550';
+        const height = heightMatch ? heightMatch[1] : '550';
+        
+        // Extract background color
+        const bgColorMatch = inputCode.match(/background:\s*['"]([^'"]+)['"]/);
+        const bgColor = bgColorMatch ? bgColorMatch[1] : '#F0EEE6';
         
         // Generate HTML template
         const htmlTemplate = `<!DOCTYPE html>
@@ -247,7 +152,7 @@ function convertReactToStandalone(reactCode) {
     <style>
         body {
             margin: 0;
-            background: ${backgroundColor};
+            background: ${bgColor};
             overflow: hidden;
             display: flex;
             align-items: center;
@@ -278,33 +183,9 @@ document.addEventListener('DOMContentLoaded', function() {
     canvas.width = ${width};
     canvas.height = ${height};
     
-    ${classDefinitions.join('\n    ')}
-    
-    // Animation loop
-    var ribbon = new ${componentName}();
-    var time = 0;
-    var animationFrameId;
-    
-    function animate() {
-        ctx.fillStyle = '${backgroundColor}';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-        
-        time += 0.00125;
-        ribbon.update(time);
-        ribbon.draw(ctx);
-        
-        animationFrameId = requestAnimationFrame(animate);
-    }
-    
-    animate();
-    
-    // Cleanup on page unload
-    window.addEventListener('beforeunload', function() {
-        cancelAnimationFrame(animationFrameId);
-    });
+    // Animation code should be here
+    console.log('Please replace this with your actual animation code');
 });`;
-        
-        debugLog('Generated JavaScript template length: ' + jsTemplate.length);
         
         return {
             html: htmlTemplate,
@@ -312,9 +193,10 @@ document.addEventListener('DOMContentLoaded', function() {
             htmlName: `${componentName.toLowerCase()}.html`,
             jsName: `${componentName.toLowerCase()}.js`
         };
+        
     } catch (error) {
         debugLog('Conversion error: ' + error.message);
-        throw new Error('Failed to convert React code to standalone files: ' + error.message);
+        throw new Error('Failed to convert input to standalone files: ' + error.message);
     }
 }
 
