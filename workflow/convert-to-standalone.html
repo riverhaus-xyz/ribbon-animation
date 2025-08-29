@@ -213,5 +213,17 @@
     <div class="notification" id="notification"></div>
     
     <script src="converter.js"></script>
+    
+    <!-- Add error handling for script loading -->
+    <script>
+        // Check if the converter.js loaded properly
+        window.addEventListener('load', function() {
+            if (typeof convertReactToStandalone === 'undefined') {
+                console.error('converter.js failed to load properly');
+                document.getElementById('statusMessage').innerHTML = 
+                    '<div class="status-message error">Error: converter.js failed to load. Please check the file path and ensure it exists.</div>';
+            }
+        });
+    </script>
 </body>
 </html>
