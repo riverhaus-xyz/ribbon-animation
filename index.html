@@ -38,11 +38,51 @@
         .workflow-link:hover {
             background: #2980b9;
         }
+        .notification {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #2ecc71;
+            color: white;
+            padding: 15px 20px;
+            border-radius: 4px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            transform: translateY(100px);
+            opacity: 0;
+            transition: all 0.3s ease;
+            z-index: 1001;
+        }
+        .notification.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
     </style>
 </head>
 <body>
     <a href="workflow/workflow.html" class="workflow-link">Animation Workflow</a>
     <canvas id="ribbonCanvas"></canvas>
+    <div class="notification" id="notification"></div>
+    
+    <script>
+        // Reset workflow progress when starting from the main page
+        document.addEventListener('DOMContentLoaded', function() {
+            localStorage.setItem('currentWorkflowStep', '1');
+            
+            // Show notification if returning from workflow
+            const urlParams = new URLSearchParams(window.location.search);
+            const fromWorkflow = urlParams.get('from');
+            
+            if (fromWorkflow === 'workflow') {
+                const notification = document.getElementById('notification');
+                notification.textContent = 'Welcome back! You can start the workflow again.';
+                notification.className = 'notification show';
+                
+                setTimeout(() => {
+                    notification.classList.remove('show');
+                }, 3000);
+            }
+        });
+    </script>
     <script src="ribbon-animation.js"></script>
 </body>
 </html>
