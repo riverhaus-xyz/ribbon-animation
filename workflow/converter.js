@@ -1,4 +1,4 @@
-// converter.js - Fixed version that actually analyzes input code
+// converter.js - Fixed version that properly extracts method bodies
 console.log("converter.js loaded");
 
 // Debug flag - set to true for debugging, false for production
@@ -74,7 +74,7 @@ function extractBackgroundColor(reactCode) {
     return '#F0EEE6';
 }
 
-// Function to extract classes from React code
+// Function to extract classes from React code - FIXED VERSION
 function extractClasses(reactCode) {
     debugLog('Extracting classes');
     
@@ -84,7 +84,7 @@ function extractClasses(reactCode) {
     
     while ((classMatch = classRegex.exec(reactCode)) !== null) {
         const className = classMatch[1];
-        const classBody = classMatch[2];
+        let classBody = classMatch[2];
         
         debugLog('Found class: ' + className);
         
@@ -106,16 +106,34 @@ function extractClasses(reactCode) {
         vanillaClass += `
             };`;
         
-        // Extract methods
-        const methodRegex = /(\w+)\s*\(([^)]*)\)\s*{([\s\S]*?)}/g;
+        // Extract methods using a more robust approach
+        const methodRegex = /(\w+)\s*\(([^)]*)\)\s*{/g;
         let methodMatch;
+        let lastIndex = 0;
         
         while ((methodMatch = methodRegex.exec(classBody)) !== null) {
             const methodName = methodMatch[1];
             const methodParams = methodMatch[2];
-            const methodBody = methodMatch[3];
+            const methodStartIndex = methodMatch.index + methodMatch[0].length;
             
             debugLog('Found method: ' + methodName);
+            
+            // Find the end of the method body by matching braces
+            let braceCount = 1;
+            let methodEndIndex = methodStartIndex;
+            
+            while (braceCount > 0 && methodEndIndex < classBody.length) {
+                const char = classBody[methodEndIndex];
+                if (char === '{') {
+                    braceCount++;
+                } else if (char === '}') {
+                    braceCount--;
+                }
+                methodEndIndex++;
+            }
+            
+            // Extract the method body (without the outer braces)
+            const methodBody = classBody.substring(methodStartIndex, methodEndIndex - 1);
             
             vanillaClass += `
             ${className}.prototype.${methodName} = function(${methodParams}) {`;
@@ -126,11 +144,18 @@ function extractClasses(reactCode) {
                 .replace(/let\s+(\w+)\s*=\s*([^;]+);/g, 'var $1 = $2;')
                 .replace(/this\.(\w+)\s*=\s*this\.(\w+)\s*\+\s*(\w+);/g, 'this.$1 = this.$2 + $3;')
                 .replace(/Math\.([a-zA-Z]+)/g, 'Math.$1')
-                .replace(/ctx\.([a-zA-Z]+)/g, 'ctx.$1');
+                .replace(/ctx\.([a-zA-Z]+)/g, 'ctx.$1')
+                .replace(/`([^`]+)`/g, function(match, p1) {
+                    // Handle template literals
+                    return '"' + p1.replace(/\$\{/g, '" + ').replace(/\}/g, ' + "') + '"';
+                });
             
             vanillaClass += convertedMethodBody;
             vanillaClass += `
             };`;
+            
+            // Update the lastIndex to continue searching after this method
+            lastIndex = methodEndIndex;
         }
         
         classDefinitions.push(vanillaClass);
