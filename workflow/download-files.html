@@ -38,6 +38,13 @@
             padding: 15px;
             margin-bottom: 15px;
         }
+        .file-info h3 {
+            margin-top: 0;
+            color: #2c3e50;
+        }
+        .file-info p {
+            margin-bottom: 10px;
+        }
         .file-name {
             font-weight: bold;
             color: #3498db;
@@ -122,10 +129,13 @@
             resize: vertical;
             margin-bottom: 15px;
         }
+        .hidden {
+            display: none;
+        }
     </style>
 </head>
 <body>
-    <a href="./workflow.html" class="workflow-link">View All Workflow Steps</a>
+    <a href="workflow.html" class="workflow-link">View All Workflow Steps</a>
     
     <div class="container">
         <h1>Download Generated Files</h1>
@@ -133,7 +143,7 @@
         <div class="editor-section">
             <h2 class="section-title">HTML File</h2>
             <div class="file-info">
-                <p><span class="file-name">index.html</span> - The HTML file for your animation</p>
+                <p><span class="file-name" id="htmlFileName">animation.html</span> - The HTML file for your animation</p>
             </div>
             <textarea id="htmlCode" readonly placeholder="HTML code will appear here..."></textarea>
             <div class="button-container">
@@ -145,7 +155,7 @@
         <div class="editor-section">
             <h2 class="section-title">JavaScript File</h2>
             <div class="file-info">
-                <p><span class="file-name">ribbon-animation.js</span> - The JavaScript file for your animation</p>
+                <p><span class="file-name" id="jsFileName">animation.js</span> - The JavaScript file for your animation</p>
             </div>
             <textarea id="jsCode" readonly placeholder="JavaScript code will appear here..."></textarea>
             <div class="button-container">
@@ -154,28 +164,37 @@
             </div>
         </div>
         
+        <div class="editor-section">
+            <h2 class="section-title">Next Steps</h2>
+            <p>After downloading both files, you'll need to upload them to your GitHub repository:</p>
+            <div class="button-container">
+                <button id="proceedToUploadButton">Proceed to Upload</button>
+            </div>
+        </div>
+        
         <div class="nav-buttons">
-            <button class="secondary-button" onclick="window.location.href='./convert-to-standalone.html'">← Previous: Convert to Standalone</button>
-            <button onclick="window.location.href='./upload-to-github.html'">Next: Upload to GitHub →</button>
+            <button class="secondary-button" onclick="window.location.href='convert-to-standalone.html'">← Previous: Convert to Standalone</button>
+            <button onclick="window.location.href='upload-to-github.html'">Next: Upload to GitHub →</button>
         </div>
     </div>
     
     <div class="notification" id="notification"></div>
     
     <script>
-        // Wait for DOM to be ready
-        document.addEventListener('DOMContentLoaded', function() {
-            // Get DOM elements
-            const htmlCode = document.getElementById('htmlCode');
-            const jsCode = document.getElementById('jsCode');
-            const downloadHtmlButton = document.getElementById('downloadHtmlButton');
-            const downloadJsButton = document.getElementById('downloadJsButton');
-            const copyHtmlButton = document.getElementById('copyHtmlButton');
-            const copyJsButton = document.getElementById('copyJsButton');
-            const notification = document.getElementById('notification');
-            
-            // Sample file content
-            const sampleHtml = `<!DOCTYPE html>
+        // Get DOM elements
+        const htmlFileName = document.getElementById('htmlFileName');
+        const jsFileName = document.getElementById('jsFileName');
+        const htmlCode = document.getElementById('htmlCode');
+        const jsCode = document.getElementById('jsCode');
+        const downloadHtmlButton = document.getElementById('downloadHtmlButton');
+        const downloadJsButton = document.getElementById('downloadJsButton');
+        const copyHtmlButton = document.getElementById('copyHtmlButton');
+        const copyJsButton = document.getElementById('copyJsButton');
+        const proceedToUploadButton = document.getElementById('proceedToUploadButton');
+        const notification = document.getElementById('notification');
+        
+        // Sample file content (in case no parameters are passed)
+        const sampleHtmlCode = `<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -202,8 +221,7 @@
     <script src="ribbon-animation.js"></script>
 </body>
 </html>`;
-
-            const sampleJs = `// Ribbon Animation - Converted from React
+        const sampleJsCode = `// Ribbon Animation - Converted from React
 document.addEventListener('DOMContentLoaded', function() {
     var canvas = document.getElementById('ribbonCanvas');
     if (!canvas) return;
@@ -386,101 +404,149 @@ document.addEventListener('DOMContentLoaded', function() {
         cancelAnimationFrame(animationFrameId);
     });
 });`;
+        
+        // Check if files are stored in sessionStorage
+        const htmlContent = sessionStorage.getItem('htmlContent');
+        const jsContent = sessionStorage.getItem('jsContent');
+        const htmlName = sessionStorage.getItem('htmlName');
+        const jsName = sessionStorage.getItem('jsName');
+        
+        // Load sample content if no data is stored
+        if (!htmlContent || !jsContent) {
+            htmlCode.value = sampleHtmlCode;
+            jsCode.value = sampleJsCode;
+        } else {
+            // Load files from sessionStorage
+            htmlCode.value = htmlContent;
+            jsCode.value = jsContent;
             
-            // Load sample content
-            htmlCode.value = sampleHtml;
-            jsCode.value = sampleJs;
-            
-            // Show notification function
-            function showNotification(message, isError = false) {
-                notification.textContent = message;
-                notification.className = 'notification show' + (isError ? ' error' : '');
-                setTimeout(() => {
-                    notification.classList.remove('show');
-                }, 3000);
+            if (htmlName) {
+                htmlFileName.textContent = htmlName;
             }
             
-            // Download function
-            function downloadFile(content, filename) {
+            if (jsName) {
+                jsFileName.textContent = jsName;
+            }
+        }
+        
+        // Function to show notification
+        function showNotification(message, isError = false) {
+            notification.textContent = message;
+            notification.className = 'notification show' + (isError ? ' error' : '');
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 3000);
+        }
+        
+        // Function to download a file
+        function downloadFile(content, fileName, contentType) {
+            try {
+                const blob = new Blob([content], { type: contentType });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = fileName;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                return true;
+            } catch (e) {
+                console.error('Download failed:', e);
+                return false;
+            }
+        }
+        
+        // Function to copy to clipboard
+        function copyToClipboard(text) {
+            if (navigator.clipboard) {
+                return navigator.clipboard.writeText(text);
+            } else {
+                // Fallback for older browsers
+                const textArea = document.createElement('textarea');
+                textArea.value = text;
+                textArea.style.position = 'fixed';
+                textArea.style.left = '-999999px';
+                textArea.style.top = '-999999px';
+                document.body.appendChild(textArea);
+                textArea.focus();
+                textArea.select();
                 try {
-                    const element = document.createElement('a');
-                    const file = new Blob([content], { type: 'text/plain' });
-                    element.href = URL.createObjectURL(file);
-                    element.download = filename;
-                    document.body.appendChild(element);
-                    element.click();
-                    document.body.removeChild(element);
-                    return true;
+                    document.execCommand('copy');
+                    document.body.removeChild(textArea);
+                    return Promise.resolve();
                 } catch (e) {
-                    console.error('Download error:', e);
-                    return false;
+                    document.body.removeChild(textArea);
+                    return Promise.reject(e);
                 }
             }
+        }
+        
+        // Download HTML button click handler
+        downloadHtmlButton.addEventListener('click', () => {
+            const content = htmlCode.value;
+            const fileName = htmlFileName.textContent;
             
-            // Copy function
-            function copyToClipboard(text) {
-                try {
-                    navigator.clipboard.writeText(text).then(() => {
-                        return true;
-                    }).catch(() => {
-                        // Fallback for older browsers
-                        const textArea = document.createElement('textarea');
-                        textArea.value = text;
-                        textArea.style.position = 'fixed';
-                        textArea.style.opacity = '0';
-                        document.body.appendChild(textArea);
-                        textArea.select();
-                        document.execCommand('copy');
-                        document.body.removeChild(textArea);
-                        return true;
-                    });
-                } catch (e) {
-                    console.error('Copy error:', e);
-                    return false;
-                }
+            if (!content) {
+                showNotification('No HTML file to download.', true);
+                return;
             }
             
-            // Event listeners
-            downloadHtmlButton.addEventListener('click', () => {
-                if (downloadFile(htmlCode.value, 'index.html')) {
-                    showNotification('HTML file downloaded!');
-                } else {
-                    showNotification('Download failed!', true);
-                }
-            });
+            if (downloadFile(content, fileName, 'text/html')) {
+                showNotification('HTML file downloaded successfully!');
+            } else {
+                showNotification('Failed to download HTML file.', true);
+            }
+        });
+        
+        // Download JavaScript button click handler
+        downloadJsButton.addEventListener('click', () => {
+            const content = jsCode.value;
+            const fileName = jsFileName.textContent;
             
-            downloadJsButton.addEventListener('click', () => {
-                if (downloadFile(jsCode.value, 'ribbon-animation.js')) {
-                    showNotification('JavaScript file downloaded!');
-                } else {
-                    showNotification('Download failed!', true);
-                }
-            });
+            if (!content) {
+                showNotification('No JavaScript file to download.', true);
+                return;
+            }
             
-            copyHtmlButton.addEventListener('click', () => {
-                if (copyToClipboard(htmlCode.value)) {
+            if (downloadFile(content, fileName, 'text/javascript')) {
+                showNotification('JavaScript file downloaded successfully!');
+            } else {
+                showNotification('Failed to download JavaScript file.', true);
+            }
+        });
+        
+        // Copy HTML button click handler
+        copyHtmlButton.addEventListener('click', () => {
+            copyToClipboard(htmlCode.value)
+                .then(() => {
                     showNotification('HTML copied to clipboard!');
-                } else {
-                    showNotification('Copy failed!', true);
-                }
-            });
-            
-            copyJsButton.addEventListener('click', () => {
-                if (copyToClipboard(jsCode.value)) {
+                })
+                .catch(() => {
+                    showNotification('Failed to copy HTML.', true);
+                });
+        });
+        
+        // Copy JavaScript button click handler
+        copyJsButton.addEventListener('click', () => {
+            copyToClipboard(jsCode.value)
+                .then(() => {
                     showNotification('JavaScript copied to clipboard!');
-                } else {
-                    showNotification('Copy failed!', true);
-                }
-            });
-            
-            console.log('Download page initialized successfully');
+                })
+                .catch(() => {
+                    showNotification('Failed to copy JavaScript.', true);
+                });
+        });
+        
+        // Proceed to upload button click handler
+        proceedToUploadButton.addEventListener('click', () => {
+            window.location.href = './upload-to-github.html';
+        });
+        
+        // Set current workflow step
+        document.addEventListener('DOMContentLoaded', function() {
+            localStorage.setItem('currentWorkflowStep', '3');
         });
     </script>
 </body>
-            <script>
-    // Set current workflow step
-    document.addEventListener('DOMContentLoaded', function() {
-        localStorage.setItem('currentWorkflowStep', '3');
-    });
-</script>
 </html>
