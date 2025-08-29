@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ribbon Animation Editor</title>
+    <title>Ribbon Animation Customizer</title>
     <style>
         body {
             font-family: monospace;
@@ -12,220 +12,302 @@
             color: black;
         }
         .container {
-            max-width: 800px;
+            max-width: 1000px;
             margin: 0 auto;
         }
-        .control-group {
-            margin-bottom: 15px;
+        h1 {
+            color: #2c3e50;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
         }
-        label {
-            display: block;
-            margin-bottom: 5px;
-        }
-        input[type="text"], input[type="number"], select {
-            width: 100%;
-            padding: 5px;
-            border: 1px solid #ccc;
-            font-family: monospace;
-        }
-        .checkbox-group {
+        .editor-container {
             display: flex;
-            align-items: center;
-            margin-bottom: 15px;
+            flex-direction: column;
+            gap: 20px;
         }
-        input[type="checkbox"] {
-            margin-right: 10px;
+        .editor-section {
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 15px;
         }
-        .size-controls {
+        .section-title {
+            margin-top: 0;
+            margin-bottom: 10px;
+            color: #34495e;
+        }
+        .controls {
             display: flex;
+            flex-wrap: wrap;
             gap: 15px;
             margin-bottom: 15px;
         }
-        .size-group {
-            flex: 1;
-        }
-        .size-with-unit {
+        .control-group {
             display: flex;
+            flex-direction: column;
             gap: 5px;
         }
-        .size-input {
-            flex: 3;
+        label {
+            font-size: 14px;
+            color: #34495e;
         }
-        .unit-select {
-            flex: 1;
+        input[type="text"], input[type="color"], input[type="range"] {
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 14px;
+        }
+        input[type="range"] {
+            width: 150px;
+        }
+        textarea {
+            width: 100%;
+            height: 200px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 14px;
+            resize: vertical;
+        }
+        .button-container {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
         }
         button {
-            background: #ddd;
-            border: 1px solid #999;
-            padding: 8px 15px;
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
             cursor: pointer;
             font-family: monospace;
-            margin-right: 10px;
+            font-size: 16px;
         }
-        .preview {
-            margin: 20px 0;
-            border: 1px solid #ccc;
-            padding: 10px;
+        button:hover {
+            background: #2980b9;
         }
-        iframe {
-            width: 100%;
-            height: 300px;
-            border: 1px solid #ccc;
+        .secondary-button {
+            background: #95a5a6;
         }
-        .code-output {
-            background: #f5f5f5;
-            border: 1px solid #ccc;
-            padding: 10px;
+        .secondary-button:hover {
+            background: #7f8c8d;
+        }
+        .notification {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #2ecc71;
+            color: white;
+            padding: 15px 20px;
+            border-radius: 4px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            transform: translateY(100px);
+            opacity: 0;
+            transition: all 0.3s ease;
+        }
+        .notification.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+        .workflow-link {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
             font-family: monospace;
-            white-space: pre-wrap;
-            margin-top: 15px;
+            font-size: 16px;
+            text-decoration: none;
+            z-index: 1000;
+            transition: background 0.3s ease;
+        }
+        .workflow-link:hover {
+            background: #2980b9;
+        }
+        .preview-container {
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 15px;
+            margin-top: 20px;
+            text-align: center;
+        }
+        .preview-iframe {
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            width: 100%;
+            height: 400px;
         }
     </style>
 </head>
 <body>
+    <a href="workflow/workflow.html" class="workflow-link">View All Workflow Steps</a>
+    
     <div class="container">
-        <h1>Ribbon Animation Editor</h1>
+        <h1>Ribbon Animation Customizer</h1>
+        <p>Customize your ribbon animation and generate iframe code for embedding.</p>
         
-        <div class="control-group">
-            <label for="ribbonColor">Ribbon Color (hex):</label>
-            <input type="text" id="ribbonColor" value="404040" placeholder="e.g., 404040">
-        </div>
-        
-        <div class="control-group">
-            <label for="backgroundColor">Background Color (hex):</label>
-            <input type="text" id="backgroundColor" value="F0EEE6" placeholder="e.g., F0EEE6">
-        </div>
-        
-        <div class="checkbox-group">
-            <input type="checkbox" id="transparentBackground">
-            <label for="transparentBackground">Transparent Background</label>
-        </div>
-        
-        <div class="size-controls">
-            <div class="size-group">
-                <label>Width:</label>
-                <div class="size-with-unit">
-                    <input type="number" id="iframeWidth" value="550" min="100" class="size-input">
-                    <select id="widthUnit" class="unit-select">
-                        <option value="px">px</option>
-                        <option value="%">%</option>
-                    </select>
+        <div class="editor-container">
+            <div class="editor-section">
+                <h2 class="section-title">Animation Settings</h2>
+                <div class="controls">
+                    <div class="control-group">
+                        <label for="ribbonColor">Ribbon Color:</label>
+                        <input type="color" id="ribbonColor" value="#404040">
+                    </div>
+                    <div class="control-group">
+                        <label for="backgroundColor">Background Color:</label>
+                        <input type="color" id="backgroundColor" value="#F0EEE6">
+                    </div>
+                    <div class="control-group">
+                        <label for="animationSpeed">Animation Speed:</label>
+                        <input type="range" id="animationSpeed" min="0.5" max="2" step="0.1" value="1">
+                        <span id="speedValue">1.0x</span>
+                    </div>
+                    <div class="control-group">
+                        <label for="canvasSize">Canvas Size:</label>
+                        <select id="canvasSize">
+                            <option value="400">400x400</option>
+                            <option value="550" selected>550x550</option>
+                            <option value="800">800x800</option>
+                        </select>
+                    </div>
                 </div>
             </div>
-            <div class="size-group">
-                <label>Height:</label>
-                <div class="size-with-unit">
-                    <input type="number" id="iframeHeight" value="550" min="100" class="size-input">
-                    <select id="heightUnit" class="unit-select">
-                        <option value="px">px</option>
-                        <option value="%">%</option>
-                    </select>
-                </div>
+            
+            <div class="button-container">
+                <button id="generateCode">Generate Iframe Code</button>
+                <button id="copyCode">Copy Code</button>
+                <button class="secondary-button" id="resetSettings">Reset Settings</button>
             </div>
-        </div>
-        
-        <button id="updatePreview">Update Preview</button>
-        <button id="copyCode">Copy Code</button>
-        
-        <div class="preview">
-            <h2>Preview</h2>
-            <iframe id="previewFrame" src="https://riverhaus-xyz.github.io/ribbon-animation/"></iframe>
-        </div>
-        
-        <h2>iframe Code</h2>
-        <div class="code-output" id="codeOutput">
-&lt;iframe 
-  src="https://riverhaus-xyz.github.io/ribbon-animation/" 
-  width="550px" 
-  height="550px" 
-  frameborder="0"&gt;
-&lt;/iframe&gt;
+            
+            <div class="editor-section">
+                <h2 class="section-title">Generated Iframe Code</h2>
+                <textarea id="iframeCode" readonly placeholder="Generated iframe code will appear here..."></textarea>
+            </div>
+            
+            <div class="preview-container">
+                <h3>Preview</h3>
+                <iframe id="previewIframe" class="preview-iframe" srcdoc="<html><body style='margin:0;background:#F0EEE6;display:flex;align-items:center;justify-content:center;height:100vh;'><canvas id='canvas'></canvas><script>const canvas=document.getElementById('canvas');canvas.width=550;canvas.height=550;const ctx=canvas.getContext('2d');let time=0;function animate(){ctx.fillStyle='#F0EEE6';ctx.fillRect(0,0,canvas.width,canvas.height);time+=0.00125;ctx.beginPath();ctx.arc(275+Math.cos(time*10)*100,275+Math.sin(time*10)*100,5,0,Math.PI*2);ctx.fillStyle='#404040';ctx.fill();requestAnimationFrame(animate);}animate();</script></body></html>"></iframe>
+            </div>
         </div>
     </div>
     
+    <div class="notification" id="notification">Code copied to clipboard!</div>
+    
     <script>
         // Get DOM elements
-        const ribbonColorInput = document.getElementById('ribbonColor');
-        const backgroundColorInput = document.getElementById('backgroundColor');
-        const transparentBackgroundInput = document.getElementById('transparentBackground');
-        const iframeWidthInput = document.getElementById('iframeWidth');
-        const iframeHeightInput = document.getElementById('iframeHeight');
-        const widthUnitSelect = document.getElementById('widthUnit');
-        const heightUnitSelect = document.getElementById('heightUnit');
-        const previewFrame = document.getElementById('previewFrame');
-        const codeOutput = document.getElementById('codeOutput');
-        const updatePreviewButton = document.getElementById('updatePreview');
-        const copyCodeButton = document.getElementById('copyCode');
+        const ribbonColor = document.getElementById('ribbonColor');
+        const backgroundColor = document.getElementById('backgroundColor');
+        const animationSpeed = document.getElementById('animationSpeed');
+        const speedValue = document.getElementById('speedValue');
+        const canvasSize = document.getElementById('canvasSize');
+        const generateCodeBtn = document.getElementById('generateCode');
+        const copyCodeBtn = document.getElementById('copyCode');
+        const resetSettingsBtn = document.getElementById('resetSettings');
+        const iframeCode = document.getElementById('iframeCode');
+        const previewIframe = document.getElementById('previewIframe');
+        const notification = document.getElementById('notification');
         
-        // Base URL for the animation
-        const baseUrl = 'https://riverhaus-xyz.github.io/ribbon-animation/';
-        
-        // Update preview and code
-        function updatePreview() {
-            // Build URL with parameters
-            let url = baseUrl;
-            const params = new URLSearchParams();
-            
-            // Add ribbon color parameter
-            const ribbonColor = ribbonColorInput.value.trim();
-            if (ribbonColor && ribbonColor !== '404040') {
-                params.append('color', ribbonColor);
-            }
-            
-            // Add background color parameter
-            const backgroundColor = backgroundColorInput.value.trim();
-            if (backgroundColor && backgroundColor !== 'F0EEE6' && !transparentBackgroundInput.checked) {
-                params.append('bg', backgroundColor);
-            }
-            
-            // Add transparent background parameter
-            if (transparentBackgroundInput.checked) {
-                params.append('transparent', 'true');
-            }
-            
-            // Add parameters to URL if any exist
-            if (params.toString()) {
-                url += '?' + params.toString();
-            }
-            
-            // Update iframe src
-            previewFrame.src = url;
-            
-            // Update code output
-            const width = iframeWidthInput.value;
-            const widthUnit = widthUnitSelect.value;
-            const height = iframeHeightInput.value;
-            const heightUnit = heightUnitSelect.value;
-            
-            codeOutput.textContent = `<iframe 
-  src="${url}" 
-  width="${width}${widthUnit}" 
-  height="${height}${heightUnit}" 
-  frameborder="0">
-</iframe>`;
-        }
-        
-        // Copy code to clipboard
-        function copyCode() {
-            const textArea = document.createElement('textarea');
-            textArea.value = codeOutput.textContent;
-            document.body.appendChild(textArea);
-            textArea.select();
-            document.execCommand('copy');
-            document.body.removeChild(textArea);
-            alert('Code copied to clipboard!');
-        }
-        
-        // Add event listeners
-        updatePreviewButton.addEventListener('click', updatePreview);
-        copyCodeButton.addEventListener('click', copyCode);
-        
-        // Disable background color when transparent is checked
-        transparentBackgroundInput.addEventListener('change', () => {
-            backgroundColorInput.disabled = transparentBackgroundInput.checked;
+        // Update speed value display
+        animationSpeed.addEventListener('input', () => {
+            speedValue.textContent = animationSpeed.value + 'x';
         });
         
-        // Initialize
+        // Generate iframe code
+        generateCodeBtn.addEventListener('click', () => {
+            const size = canvasSize.value;
+            const bgColor = backgroundColor.value;
+            const ribbonColorValue = ribbonColor.value;
+            const speed = animationSpeed.value;
+            
+            const code = `<iframe 
+    src="https://your-username.github.io/your-repo/index.html?ribbonColor=${encodeURIComponent(ribbonColorValue)}&backgroundColor=${encodeURIComponent(bgColor)}&speed=${speed}&size=${size}"
+    width="${size}" 
+    height="${size}" 
+    frameborder="0" 
+    style="border:none;border-radius:4px;box-shadow:0 2px 10px rgba(0,0,0,0.1);"
+    allowfullscreen>
+</iframe>`;
+            
+            iframeCode.value = code;
+            
+            // Update preview
+            updatePreview();
+        });
+        
+        // Copy code to clipboard
+        copyCodeBtn.addEventListener('click', () => {
+            if (!iframeCode.value) {
+                alert('Please generate the code first.');
+                return;
+            }
+            
+            iframeCode.select();
+            document.execCommand('copy');
+            
+            // Show notification
+            notification.classList.add('show');
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 3000);
+        });
+        
+        // Reset settings
+        resetSettingsBtn.addEventListener('click', () => {
+            ribbonColor.value = '#404040';
+            backgroundColor.value = '#F0EEE6';
+            animationSpeed.value = '1';
+            speedValue.textContent = '1.0x';
+            canvasSize.value = '550';
+            iframeCode.value = '';
+            updatePreview();
+        });
+        
+        // Update preview function
+        function updatePreview() {
+            const size = canvasSize.value;
+            const bgColor = backgroundColor.value;
+            const ribbonColorValue = ribbonColor.value;
+            const speed = animationSpeed.value;
+            
+            const previewHtml = `<html>
+<head>
+    <style>
+        body { margin: 0; background: ${bgColor}; display: flex; align-items: center; justify-content: center; height: 100vh; }
+        canvas { display: block; }
+    </style>
+</head>
+<body>
+    <canvas id="canvas" width="${size}" height="${size}"></canvas>
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        let time = 0;
+        function animate() {
+            ctx.fillStyle = '${bgColor}';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            time += 0.00125 * ${speed};
+            ctx.beginPath();
+            ctx.arc(canvas.width/2 + Math.cos(time * 10) * 100, canvas.height/2 + Math.sin(time * 10) * 100, 5, 0, Math.PI * 2);
+            ctx.fillStyle = '${ribbonColorValue}';
+            ctx.fill();
+            requestAnimationFrame(animate);
+        }
+        animate();
+    </script>
+</body>
+</html>`;
+            
+            previewIframe.srcdoc = previewHtml;
+        }
+        
+        // Initialize with default preview
         updatePreview();
     </script>
 </body>
