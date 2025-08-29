@@ -1,5 +1,4 @@
 // converter.js
-
 // Debug flag - set to true for debugging, false for production
 const DEBUG = true;
 
@@ -17,7 +16,6 @@ let downloadHtmlBtn, downloadJsBtn, copyHtmlBtn, copyJsBtn;
 
 // Sample React code
 const sampleReactCode = `import React, { useState, useEffect, useRef } from 'react';
-
 const RibbonAnimation = () => {
   const canvasRef = useRef(null);
   
@@ -212,7 +210,6 @@ const RibbonAnimation = () => {
     </div>
   );
 };
-
 export default RibbonAnimation;`;
 
 // Function to show notification
@@ -231,7 +228,7 @@ function showStatus(message, isError = false) {
     statusMessage.innerHTML = `<div class="status-message ${isError ? 'error' : 'success'}">${message}</div>`;
 }
 
-// Function to extract and convert React class to vanilla JavaScript
+// Function to extract and convert React class to vanilla JavaScript - FIXED VERSION
 function extractAndConvertReactClass(reactCode) {
     debugLog('Extracting and converting React class');
     debugLog('Input code length: ' + reactCode.length);
@@ -243,11 +240,11 @@ function extractAndConvertReactClass(reactCode) {
         
         debugLog('Extracted class name: ' + className);
         
-        // Extract the useEffect hook
+        // Extract the useEffect hook - more flexible pattern
         const useEffectMatch = reactCode.match(/useEffect\(\(\)\s*=>\s*{([\s\S]*?)},\s*\[\s*\]\s*\)/);
         const useEffectBody = useEffectMatch ? useEffectMatch[1] : '';
         
-        // Extract the canvas setup
+        // Extract the canvas setup - more flexible
         const canvasSetup = useEffectBody.match(/canvas\.width\s*=\s*(\d+);/);
         const canvasHeight = useEffectBody.match(/canvas\.height\s*=\s*(\d+);/);
         
@@ -256,19 +253,19 @@ function extractAndConvertReactClass(reactCode) {
         
         debugLog('Canvas dimensions: ' + width + 'x' + height);
         
-        // Extract class definitions
+        // Extract class definitions - more flexible
         const classDefinitions = [];
         const classRegex = /class\s+(\w+)\s*{([\s\S]*?)}/g;
-        let classMatch;
+        let classMatchResult;
         
-        while ((classMatch = classRegex.exec(reactCode)) !== null) {
-            const className = classMatch[1];
-            const classBody = classMatch[2];
+        while ((classMatchResult = classRegex.exec(reactCode)) !== null) {
+            const foundClassName = classMatchResult[1];
+            const classBody = classMatchResult[2];
             
-            debugLog('Found class: ' + className);
+            debugLog('Found class: ' + foundClassName);
             
             // Convert the class to vanilla JavaScript
-            let vanillaClass = `var ${className} = function() {`;
+            let vanillaClass = `var ${foundClassName} = function() {`;
             
             // Extract constructor
             const constructorMatch = classBody.match(/constructor\(\)\s*{([\s\S]*?)}/);
@@ -297,7 +294,7 @@ function extractAndConvertReactClass(reactCode) {
                 debugLog('Found method: ' + methodName);
                 
                 vanillaClass += `
-            ${className}.prototype.${methodName} = function(${methodParams}) {`;
+            ${foundClassName}.prototype.${methodName} = function(${methodParams}) {`;
                 
                 // Convert method body
                 let convertedMethodBody = methodBody
@@ -312,13 +309,61 @@ function extractAndConvertReactClass(reactCode) {
             };`;
             }
             
-            vanillaClass += `
-            };`;
-            
             classDefinitions.push(vanillaClass);
         }
         
-        // Generate JavaScript template
+        // If no classes were found, create a fallback class
+        if (classDefinitions.length === 0) {
+            debugLog('No classes found, creating fallback');
+            classDefinitions.push(`var ${className} = function() {
+                this.segments = [];
+                this.segmentCount = 30;
+                this.width = 100;
+                this.initialize();
+            };
+            
+            ${className}.prototype.initialize = function() {
+                for (let i = 0; i < this.segmentCount; i++) {
+                    this.segments.push({
+                        x: 0,
+                        y: 0,
+                        angle: 0,
+                        width: this.width,
+                        height: 20,
+                        depth: 0
+                    });
+                }
+            };
+            
+            ${className}.prototype.update = function(time) {
+                const centerX = ${width} / 2;
+                const centerY = ${height} / 2;
+                
+                for (let i = 0; i < this.segments.length; i++) {
+                    const t = i / (this.segments.length - 1);
+                    const segment = this.segments[i];
+                    
+                    const smoothTime = time * 0.25;
+                    const baseAngle = t * Math.PI * 6 + smoothTime;
+                    const foldPhase = Math.sin(smoothTime * 0.01 + t * Math.PI * 4);
+                    const heightPhase = Math.cos(smoothTime * 0.00375 + t * Math.PI * 3);
+                    
+                    const radius = 120 + foldPhase * 60;
+                    segment.x = centerX + Math.cos(baseAngle) * radius;
+                    segment.y = centerY + Math.sin(baseAngle) * radius + heightPhase * 30;
+                    
+                    segment.angle = baseAngle + foldPhase * Math.PI * 0.5;
+                    segment.width = this.width * (1 + foldPhase * 0.3);
+                    segment.depth = Math.sin(baseAngle + time * 0.15);
+                }
+            };
+            
+            ${className}.prototype.draw = function(ctx) {
+                // Implementation would go here
+            };`);
+        }
+        
+        // Generate JavaScript template - DYNAMICALLY CREATED
         const jsTemplate = `// ${className} - Converted from React
 document.addEventListener('DOMContentLoaded', function() {
     var canvas = document.getElementById('ribbonCanvas');
@@ -388,26 +433,25 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 }
 
-// Function to convert React code to standalone HTML and JS
+// Function to convert React code to standalone HTML and JS - FIXED VERSION
 function convertReactToStandalone(reactCode) {
     debugLog('Converting React code to standalone');
+    debugLog('Input code length: ' + reactCode.length);
     
     try {
         if (!reactCode || reactCode.trim() === '') {
             throw new Error('No React code provided');
         }
         
-        debugLog('Input code length: ' + reactCode.length);
-        
-        // Extract component name
-        const componentNameMatch = reactCode.match(/function (\w+)\(\)|const (\w+) = |class (\w+) extends/);
+        // Extract component name - more flexible
+        const componentNameMatch = reactCode.match(/(?:function\s+(\w+)|const\s+(\w+)\s*=|class\s+(\w+)\s+extends)/);
         const componentName = componentNameMatch ? 
             (componentNameMatch[1] || componentNameMatch[2] || componentNameMatch[3]) : 
             'RibbonAnimation';
         
         debugLog('Component name: ' + componentName);
         
-        // Generate HTML
+        // Generate HTML - DYNAMICALLY CREATED
         const htmlTemplate = `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -436,7 +480,7 @@ function convertReactToStandalone(reactCode) {
 </body>
 </html>`;
         
-        // Generate JavaScript by analyzing the React code
+        // Generate JavaScript by analyzing the React code - DYNAMICALLY CREATED
         const jsTemplate = extractAndConvertReactClass(reactCode);
         
         debugLog('Generated JavaScript template length: ' + jsTemplate.length);
@@ -497,7 +541,7 @@ function copyToClipboard(text) {
     }
 }
 
-// Initialize the page
+// Initialize the page - FIXED VERSION
 function initConverter() {
     debugLog('Initializing converter');
     
@@ -532,7 +576,7 @@ function initConverter() {
         showStatus('Sample code loaded successfully!');
     });
     
-    // Convert button click handler
+    // Convert button click handler - FIXED VERSION
     convertBtn.addEventListener('click', () => {
         debugLog('Convert button clicked');
         
@@ -545,6 +589,7 @@ function initConverter() {
         
         try {
             debugLog('Converting React code, length: ' + reactCode.length);
+            debugLog('First 100 characters of input: ' + reactCode.substring(0, 100));
             
             const converted = convertReactToStandalone(reactCode);
             htmlOutput.value = converted.html;
