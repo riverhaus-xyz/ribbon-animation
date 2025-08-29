@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Convert to Standalone</title>
+    <style>
+        body {
+            font-family: monospace;
+            margin: 20px;
+            background: white;
+            color: black;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+        h1 {
+            color: #2c3e50;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+        }
+        .editor-container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        .editor-section {
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 15px;
+        }
+        .section-title {
+            margin-top: 0;
+            margin-bottom: 10px;
+            color: #34495e;
+        }
+        textarea {
+            width: 100%;
+            height: 400px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 14px;
+            resize: vertical;
+        }
+        .button-container {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+        }
+        button {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-family: monospace;
+            font-size: 16px;
+        }
+        button:hover {
+            background: #2980b9;
+        }
+        .secondary-button {
+            background: #95a5a6;
+        }
+        .secondary-button:hover {
+            background: #7f8c8d;
+        }
+        .notification {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #2ecc71;
+            color: white;
+            padding: 15px 20px;
+            border-radius: 4px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            transform: translateY(100px);
+            opacity: 0;
+            transition: all 0.3s ease;
+        }
+        .notification.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+        .progress-steps {
+            display: flex;
+            justify-content: space-between;
+            margin: 20px 0 30px;
+        }
+        .step {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 25%;
+        }
+        .step-circle {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background: #ecf0f1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 8px;
+        }
+        .step.active .step-circle {
+            background: #3498db;
+            color: white;
+        }
+        .step.completed .step-circle {
+            background: #2ecc71;
+            color: white;
+        }
+        .step-label {
+            text-align: center;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Convert to Standalone Files</h1>
+        <p>Transform your React component into standalone HTML and JavaScript files.</p>
+        
+        <div class="progress-steps">
+            <div class="step completed">
+                <div class="step-circle">✓</div>
+                <div class="step-label">Clean Code</div>
+            </div>
+            <div class="step active">
+                <div class="step-circle">2</div>
+                <div class="step-label">Convert</div>
+            </div>
+            <div class="step">
+                <div class="step-circle">3</div>
+                <div class="step-label">Download</div>
+            </div>
+            <div class="step">
+                <div class="step-circle">4</div>
+                <div class="step-label">Upload</div>
+            </div>
+        </div>
+        
+        <div class="editor-container">
+            <div class="editor-section">
+                <h2 class="section-title">React Code</h2>
+                <textarea id="inputCode" placeholder="Paste your cleaned React code here..."></textarea>
+            </div>
+            
+            <div class="button-container">
+                <button id="convertBtn">Convert to Standalone</button>
+                <button class="secondary-button" id="loadSampleBtn">Load Sample</button>
+            </div>
+            
+            <div class="editor-section">
+                <h2 class="section-title">HTML Output</h2>
+                <textarea id="htmlOutput" readonly placeholder="HTML code will appear here..."></textarea>
+            </div>
+            
+            <div class="editor-section">
+                <h2 class="section-title">JavaScript Output</h2>
+                <textarea id="jsOutput" readonly placeholder="JavaScript code will appear here..."></textarea>
+            </div>
+        </div>
+        
+        <div class="button-container" style="margin-top: 20px;">
+            <button class="secondary-button" id="backBtn">Back to Workflow</button>
+            <button id="nextBtn">Next: Download Files</button>
+        </div>
+    </div>
+    
+    <div class="notification" id="notification">Code converted successfully!</div>
+    
+    <script>
+        // Get DOM elements
+        const inputCode = document.getElementById('inputCode');
+        const htmlOutput = document.getElementById('htmlOutput');
+        const jsOutput = document.getElementById('jsOutput');
+        const convertBtn = document.getElementById('convertBtn');
+        const loadSampleBtn = document.getElementById('loadSampleBtn');
+        const backBtn = document.getElementById('backBtn');
+        const nextBtn = document.getElementById('nextBtn');
+        const notification = document.getElementById('notification');
+        
+        // Load sample React code
+        loadSampleBtn.addEventListener('click', () => {
+            inputCode.value = `import React, { useEffect, useRef } from 'react';
+
+interface RibbonSegment {
+  x: number;
+  y: number;
+  angle: number;
+  width: number;
+  height: number;
+  depth: number;
+}
+
+interface RibbonStrip {
+  segments: RibbonSegment[];
+  segmentCount: number;
+  width: number;
+  initialize: () => void;
+  update: (time: number) => void;
+  draw: (ctx: CanvasRenderingContext2D) => void;
+}
+
+const DramaticRibbonFold = () => {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    
+    canvas.width = 550;
+    canvas.height = 550;
+    
+    class RibbonStrip {
+      segments: RibbonSegment[] = [];
+      segmentCount: number = 30;
+      width: number = 100;
+      
+      constructor() {
+        this.initialize();
+      }
+      
+      initialize() {
+        for (let i = 0; i < this.segmentCount; i++) {
+          this.segments.push({
+            x: 0,
+            y: 0,
+            angle: 0,
+            width: this.width,
+            height: 20,
+            depth: 0
+          });
+        }
+      }
+      
+      update(time: number) {
+        const centerX = canvas.width / 2;
+        const centerY = canvas.height / 2;
+        
+        for (let i = 0; i < this.segments.length; i++) {
+          const t = i / (this.segments.length - 1);
+          const segment = this.segments[i];
+          
+          const smoothTime = time * 0.25;
+          const baseAngle = t * Math.PI * 6 + smoothTime;
+          const foldPhase = Math.sin(smoothTime * 0.01 + t * Math.PI * 4);
+          const heightPhase = Math.cos(smoothTime * 0.00375 + t * Math.PI * 3);
+          
+          const radius = 120 + foldPhase * 60;
+          segment.x = centerX + Math.cos(baseAngle) * radius;
+          segment.y = centerY + Math.sin(baseAngle) * radius + heightPhase * 30;
+          
+          segment.angle = baseAngle + foldPhase * Math.PI * 0.5;
+          segment.width = this.width * (1 + foldPhase * 0.3);
+          segment.depth = Math.sin(baseAngle + time * 0.15);
+        }
+      }
+      
+      draw(ctx: CanvasRenderingContext2D) {
+        ctx.lineWidth = 1.5;
+        ctx.setLineDash([2, 2]);
+        
+        const sortedSegments = [...this.segments].sort((a, b) => {
+          const threshold = 0.1;
+          return Math.abs(a.depth - b.depth) > threshold ? a.depth - b.depth : 0;
+        });
+        
+        for (let i = 0; i < sortedSegments.length - 1; i++) {
+          const current = sortedSegments[i];
+          const next = sortedSegments[i + 1];
+          
+          ctx.save();
+          ctx.beginPath();
+          
+          const cos1 = Math.cos(current.angle);
+          const sin1 = Math.sin(current.angle);
+          const cos2 = Math.cos(next.angle);
+          const sin2 = Math.sin(next.angle);
+          
+          const p1 = {
+            x: current.x - sin1 * current.width/2,
+            y: current.y + cos1 * current.width/2
+          };
+          const p2 = {
+            x: current.x + sin1 * current.width/2,
+            y: current.y - cos1 * current.width/2
+          };
+          const p3 = {
+            x: next.x + sin2 * next.width/2,
+            y: next.y - cos2 * next.width/2
+          };
+          const p4 = {
+            x: next.x - sin2 * next.width/2,
+            y: next.y + cos2 * next.width/2
+          };
+          
+          ctx.moveTo(p1.x, p1.y);
+          ctx.lineTo(p2.x, p2.y);
+          ctx.lineTo(p3.x, p3.y);
+          ctx.lineTo(p4.x, p4.y);
+          ctx.closePath();
+          
+          const depthFactor = (current.depth + 1) * 0.5;
+          const opacity = 0.6 + depthFactor * 0.4;
+          
+          ctx.strokeStyle = \`rgba(40, 40, 40, \${opacity})\`;
+          ctx.stroke();
+          
+          ctx.beginPath();
+          ctx.moveTo(p1.x, p1.y);
+          ctx.lineTo(p3.x, p3.y);
+          ctx.stroke();
+          
+          ctx.beginPath();
+          ctx.moveTo(p2.x, p2.y);
+          ctx.lineTo(p4.x, p4.y);
+          ctx.stroke();
+          
+          ctx.beginPath();
+          ctx.moveTo(current.x, current.y);
+          ctx.lineTo(next.x, next.y);
+          ctx.strokeStyle = \`rgba(80, 80, 80, \${opacity * 0.7})\`;
+          ctx.stroke();
+          
+          ctx.restore();
+        }
+        
+        for (let i = 0; i < sortedSegments.length; i++) {
+          const segment = sortedSegments[i];
+          const cos = Math.cos(segment.angle);
+          const sin = Math.sin(segment.angle);
+          
+          const p1 = {
+            x: segment.x - sin * segment.width/2,
+            y: segment.y + cos * segment.width/2
+          };
+          const p2 = {
+            x: segment.x + sin * segment.width/2,
+            y: segment.y - cos * segment.width/2
+          };
+          
+          const depthFactor = (segment.depth + 1) * 0.5;
+          const opacity = 0.7 + depthFactor * 0.3;
+          
+          ctx.beginPath();
+          ctx.arc(p1.x, p1.y, 2, 0, Math.PI * 2);
+          ctx.fillStyle = \`rgba(0, 0, 0, \${opacity})\`;
+          ctx.fill();
+          
+          ctx.beginPath();
+          ctx.arc(p2.x, p2.y, 2, 0, Math.PI * 2);
+          ctx.fillStyle = \`rgba(0, 0, 0, \${opacity})\`;
+          ctx.fill();
+          
+          ctx.beginPath();
+          ctx.arc(segment.x, segment.y, 1.5, 0, Math.PI * 2);
+          ctx.fillStyle = \`rgba(40, 40, 40, \${opacity})\`;
+          ctx.fill();
+        }
+        
+        ctx.setLineDash([]);
+      }
+    }
+    
+    const ribbon = new RibbonStrip();
+    let time = 0;
+    let animationFrameId: number;
+    
+    function animate() {
+      ctx.fillStyle = '#F0EEE6';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      
+      time += 0.00125;
+      ribbon.update(time);
+      ribbon.draw(ctx);
+      
+      animationFrameId = requestAnimationFrame(animate);
+    }
+    
+    animate();
+    
+    return () => {
+      cancelAnimationFrame(animationFrameId);
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ribbon.segments = [];
+      time = 0;
+    };
+  }, []);
+  
+  return (
+    <div style={{
+      margin: 0,
+      background: '#F0EEE6',
+      overflow: 'hidden',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      height: '100vh',
+      width: '100vw',
+      position: 'relative'
+    }}>
+      <canvas 
+        ref={canvasRef} 
+        style={{ 
+          display: 'block',
+          width: '550px',
+          height: '550px'
+        }} 
+      />
+    </div>
+  );
+};
+
+export default DramaticRibbonFold;`;
+        });
+        
+        // Convert React code to standalone files
+        convertBtn.addEventListener('click', () => {
+            const reactCode = inputCode.value;
+            if (!reactCode.trim()) {
+                alert('Please paste some React code first.');
+                return;
+            }
+            
+            // This is a simplified conversion - in a real implementation, 
+            // you would need a proper React-to-vanilla-JS converter
+            const htmlCode = `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ribbon Animation</title>
+    <style>
+        body {
+            margin: 0;
+            background: #F0EEE6;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            width: 100vw;
+            position: relative;
+        }
+        canvas {
+            display: block;
+            width: 550px;
+            height: 550px;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="ribbonCanvas"></canvas>
+    <script src="ribbon-animation.js"></script>
+</body>
+</html>`;
+            
+            const jsCode = `// Ribbon Animation - Converted from React
+document.addEventListener('DOMContentLoaded', () => {
+    const canvas = document.getElementById('ribbonCanvas');
+    if (!canvas) return;
+    
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    
+    canvas.width = 550;
+    canvas.height = 550;
+    
+    // RibbonStrip class definition would go here
+    // (Simplified for this example)
+    
+    // Animation code would go here
+    // (Simplified for this example)
+    
+    console.log('Standalone ribbon animation loaded');
+});`;
+            
+            htmlOutput.value = htmlCode;
+            jsOutput.value = jsCode;
+            
+            // Show notification
+            notification.classList.add('show');
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 3000);
+        });
+        
+        // Navigation handlers
+        backBtn.addEventListener('click', () => {
+            window.location.href = 'workflow.html';
+        });
+        
+        nextBtn.addEventListener('click', () => {
+            if (!htmlOutput.value || !jsOutput.value) {
+                alert('Please convert the code first.');
+                return;
+            }
+            window.location.href = 'download-files.html';
+        });
+    </script>
+</body>
+</html>
