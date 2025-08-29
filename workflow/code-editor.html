@@ -186,7 +186,6 @@
         
         // Sample React code
         const sampleReactCode = `import React, { useState, useEffect, useRef } from 'react';
-
 /**
  * RibbonAnimation component - A beautiful ribbon animation using canvas
  * This component creates a dynamic ribbon effect that flows and folds in 3D space
@@ -398,7 +397,6 @@ const RibbonAnimation = () => {
     </div>
   );
 };
-
 export default RibbonAnimation;`;
         
         // Function to show notification
@@ -468,6 +466,31 @@ export default RibbonAnimation;`;
             };
         }
         
+        // Function to copy to clipboard
+        function copyToClipboard(text) {
+            if (navigator.clipboard) {
+                return navigator.clipboard.writeText(text);
+            } else {
+                // Fallback for older browsers
+                const textArea = document.createElement('textarea');
+                textArea.value = text;
+                textArea.style.position = 'fixed';
+                textArea.style.left = '-999999px';
+                textArea.style.top = '-999999px';
+                document.body.appendChild(textArea);
+                textArea.focus();
+                textArea.select();
+                try {
+                    document.execCommand('copy');
+                    document.body.removeChild(textArea);
+                    return Promise.resolve();
+                } catch (e) {
+                    document.body.removeChild(textArea);
+                    return Promise.reject(e);
+                }
+            }
+        }
+        
         // Load sample button click handler
         loadSampleBtn.addEventListener('click', () => {
             inputCode.value = sampleReactCode;
@@ -507,31 +530,6 @@ export default RibbonAnimation;`;
                     showNotification('Failed to copy code.', true);
                 });
         });
-        
-        // Function to copy to clipboard
-        function copyToClipboard(text) {
-            if (navigator.clipboard) {
-                return navigator.clipboard.writeText(text);
-            } else {
-                // Fallback for older browsers
-                const textArea = document.createElement('textarea');
-                textArea.value = text;
-                textArea.style.position = 'fixed';
-                textArea.style.left = '-999999px';
-                textArea.style.top = '-999999px';
-                document.body.appendChild(textArea);
-                textArea.focus();
-                textArea.select();
-                try {
-                    document.execCommand('copy');
-                    document.body.removeChild(textArea);
-                    return Promise.resolve();
-                } catch (e) {
-                    document.body.removeChild(textArea);
-                    return Promise.reject(e);
-                }
-            }
-        }
         
         // Next step button click handler
         nextStepBtn.addEventListener('click', () => {
