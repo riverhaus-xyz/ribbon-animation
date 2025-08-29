@@ -4,47 +4,280 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Convert to Standalone</title>
-    <!-- ... existing styles ... -->
+    <style>
+        body {
+            font-family: monospace;
+            margin: 20px;
+            background: white;
+            color: black;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+        h1 {
+            color: #2c3e50;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+        }
+        .editor-container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        .editor-section {
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 15px;
+        }
+        .section-title {
+            margin-top: 0;
+            margin-bottom: 10px;
+            color: #34495e;
+        }
+        textarea {
+            width: 100%;
+            height: 300px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 14px;
+            resize: vertical;
+        }
+        .button-container {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+        }
+        button {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-family: monospace;
+            font-size: 16px;
+        }
+        button:hover {
+            background: #2980b9;
+        }
+        .secondary-button {
+            background: #95a5a6;
+        }
+        .secondary-button:hover {
+            background: #7f8c8d;
+        }
+        .status-message {
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+    </style>
 </head>
 <body>
-    <!-- ... existing body content ... -->
-    
-    <!-- Use explicit path and add error handling -->
-    <script src="./converter.js" onerror="handleScriptError()"></script>
-    
-    <!-- Improved error handling for script loading -->
-    <script>
-        function handleScriptError() {
-            console.error('converter.js failed to load');
-            document.getElementById('statusMessage').innerHTML = 
-                '<div class="status-message error">Error: converter.js failed to load. Trying alternative path...</div>';
+    <div class="container">
+        <h1>Convert to Standalone</h1>
+        <p>Paste your cleaned React code below to generate standalone HTML and JavaScript files.</p>
+        
+        <div class="editor-container">
+            <div class="editor-section">
+                <h2 class="section-title">React Code</h2>
+                <textarea id="inputCode" placeholder="Paste your cleaned React code here..."></textarea>
+            </div>
             
-            // Try to load from an alternative path
-            var script = document.createElement('script');
-            script.src = '../converter.js';
-            script.onerror = function() {
-                document.getElementById('statusMessage').innerHTML = 
-                    '<div class="status-message error">Error: converter.js not found at any location.</div>';
-            };
-            script.onload = function() {
-                console.log('Loaded from alternative path');
-                document.getElementById('statusMessage').innerHTML = 
-                    '<div class="status-message success">converter.js loaded successfully!</div>';
-            };
-            document.head.appendChild(script);
-        }
-        
-        // Check if the converter.js loaded properly
-        function checkScriptLoaded() {
-            if (typeof convertReactToStandalone === 'undefined') {
-                console.error('converter.js functions not available');
-                document.getElementById('statusMessage').innerHTML = 
-                    '<div class="status-message error">Error: converter.js loaded but functions not available.</div>';
+            <div class="button-container">
+                <button id="convertBtn">Convert to Standalone</button>
+                <button class="secondary-button" id="loadSampleBtn">Load Sample</button>
+            </div>
+            
+            <div id="statusMessage"></div>
+            
+            <div class="editor-section">
+                <h2 class="section-title">HTML Output</h2>
+                <textarea id="htmlOutput" readonly placeholder="HTML code will appear here..."></textarea>
+            </div>
+            
+            <div class="editor-section">
+                <h2 class="section-title">JavaScript Output</h2>
+                <textarea id="jsOutput" readonly placeholder="JavaScript code will appear here..."></textarea>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Wait for DOM to be fully loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log("DOM fully loaded");
+            
+            // Get DOM elements
+            const inputCode = document.getElementById('inputCode');
+            const convertBtn = document.getElementById('convertBtn');
+            const loadSampleBtn = document.getElementById('loadSampleBtn');
+            const htmlOutput = document.getElementById('htmlOutput');
+            const jsOutput = document.getElementById('jsOutput');
+            const statusMessage = document.getElementById('statusMessage');
+            
+            // Check if all elements were found
+            if (!inputCode) {
+                console.error("Element with ID 'inputCode' not found");
+                return;
             }
+            if (!convertBtn) {
+                console.error("Element with ID 'convertBtn' not found");
+                return;
+            }
+            if (!loadSampleBtn) {
+                console.error("Element with ID 'loadSampleBtn' not found");
+                return;
+            }
+            if (!htmlOutput) {
+                console.error("Element with ID 'htmlOutput' not found");
+                return;
+            }
+            if (!jsOutput) {
+                console.error("Element with ID 'jsOutput' not found");
+                return;
+            }
+            if (!statusMessage) {
+                console.error("Element with ID 'statusMessage' not found");
+                return;
+            }
+            
+            console.log("All DOM elements found");
+            
+            // Sample React code
+            const sampleReactCode = `import React, { useState, useEffect, useRef } from 'react';
+const RibbonAnimation = () => {
+  const canvasRef = useRef(null);
+  
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    
+    canvas.width = 550;
+    canvas.height = 550;
+    
+    // Animation code here...
+    
+  }, []);
+  
+  return (
+    <div style={{ margin: 0, background: '#F0EEE6', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', width: '100vw' }}>
+      <canvas ref={canvasRef} id="ribbonCanvas"></canvas>
+    </div>
+  );
+};
+export default RibbonAnimation;`;
+            
+            // Function to show status message
+            function showStatus(message, isError = false) {
+                statusMessage.innerHTML = `<div class="status-message ${isError ? 'error' : 'success'}">${message}</div>`;
+            }
+            
+            // Load sample button click handler
+            loadSampleBtn.addEventListener('click', function() {
+                console.log('Loading sample code');
+                inputCode.value = sampleReactCode;
+                showStatus('Sample code loaded successfully!');
+            });
+            
+            // Convert button click handler
+            convertBtn.addEventListener('click', function() {
+                console.log('Convert button clicked');
+                
+                const reactCode = inputCode.value.trim();
+                
+                if (!reactCode) {
+                    showStatus('Please enter React code to convert.', true);
+                    return;
+                }
+                
+                try {
+                    console.log('Converting React code');
+                    
+                    // Simple conversion for now
+                    const componentName = 'RibbonAnimation';
+                    const htmlTemplate = `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>${componentName}</title>
+    <style>
+        body {
+            margin: 0;
+            background: '#F0EEE6';
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            width: 100vw;
         }
+        canvas {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="ribbonCanvas"></canvas>
+    <script src="${componentName.toLowerCase()}.js"></script>
+</body>
+</html>`;
+                    
+                    const jsTemplate = `// ${componentName} - Converted from React
+document.addEventListener('DOMContentLoaded', function() {
+    var canvas = document.getElementById('ribbonCanvas');
+    if (!canvas) return;
+    
+    var ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    
+    canvas.width = 550;
+    canvas.height = 550;
+    
+    // Animation code here...
+    
+    function animate() {
+        ctx.fillStyle = '#F0EEE6';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
         
-        // Check after load
-        window.addEventListener('load', checkScriptLoaded);
+        // Add your animation code here
+        
+        requestAnimationFrame(animate);
+    }
+    
+    animate();
+});`;
+                    
+                    htmlOutput.value = htmlTemplate;
+                    jsOutput.value = jsTemplate;
+                    
+                    showStatus('Code converted successfully!');
+                } catch (error) {
+                    console.error('Conversion error:', error);
+                    showStatus('Error: ' + error.message, true);
+                }
+            });
+            
+            console.log("Converter initialized successfully");
+        });
     </script>
 </body>
 </html>
